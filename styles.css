@@ -10,16 +10,21 @@ body {
         sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: linear-gradient(135deg, #1a1a1a 0%, #161616 100%);
     color: #e0e0e0;
     min-height: 100vh;
     padding: 20px;
     overflow-y: scroll;
     /* 常にスクロールバーを表示してレイアウトシフトを防ぐ */
+    transition: background 0.5s ease;
+}
+
+body.timer-running {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
 .container {
-    background: #1e1e2e;
+    background: #1e1e1e;
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     width: 100%;
@@ -27,6 +32,11 @@ body {
     margin: 0 auto;
     padding: 40px;
     border: 1px solid #2a2a3e;
+    transition: background 0.5s ease;
+}
+
+body.timer-running .container {
+    background: #1e1e2e;
 }
 
 header {
@@ -537,10 +547,23 @@ header h1 {
     padding: 12px 16px;
     transition: background 0.2s ease;
     border: 1px solid #3a3a4e;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
 }
 
 .record-item:hover {
     background: #3a3a4e;
+}
+
+.record-content {
+    flex: 1;
+}
+
+.record-actions {
+    display: flex;
+    gap: 8px;
 }
 
 .record-date {
@@ -559,6 +582,148 @@ header h1 {
 .record-description {
     font-size: 14px;
     color: #e0e0e0;
+}
+
+.btn-edit-record,
+.btn-delete-record {
+    padding: 6px 12px;
+    font-size: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.btn-edit-record {
+    background: #7c8aff;
+    color: white;
+}
+
+.btn-edit-record:hover {
+    background: #6c78ef;
+    transform: translateY(-1px);
+}
+
+.btn-delete-record {
+    background: #f5576c;
+    color: white;
+}
+
+.btn-delete-record:hover {
+    background: #e5475c;
+    transform: translateY(-1px);
+}
+
+.record-edit-form {
+    width: 100%;
+}
+
+.edit-form-row {
+    margin-bottom: 15px;
+}
+
+.edit-form-row:last-of-type {
+    margin-bottom: 20px;
+}
+
+.edit-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 6px;
+}
+
+.edit-date-input,
+.edit-time-input,
+.edit-description-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 2px solid #3a3a4e;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+    background-color: #1e1e2e;
+    color: #e0e0e0;
+}
+
+.edit-date-input:focus,
+.edit-time-input:focus,
+.edit-description-input:focus {
+    border-color: #7c8aff;
+}
+
+.edit-tag-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+    background: #1e1e2e;
+    border: 1px solid #3a3a4e;
+    border-radius: 6px;
+    min-height: 40px;
+}
+
+.edit-tag-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 4px 8px;
+    background: #2a2a3e;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+    color: #e0e0e0;
+}
+
+.edit-tag-checkbox-label:hover {
+    background: #3a3a4e;
+}
+
+.edit-tag-checkbox {
+    margin-right: 6px;
+    cursor: pointer;
+}
+
+.edit-form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.btn-save-record,
+.btn-cancel-edit {
+    padding: 8px 16px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.btn-save-record {
+    background: #7c8aff;
+    color: white;
+}
+
+.btn-save-record:hover {
+    background: #6c78ef;
+    transform: translateY(-1px);
+}
+
+.btn-cancel-edit {
+    background: #555;
+    color: white;
+}
+
+.btn-cancel-edit:hover {
+    background: #666;
+    transform: translateY(-1px);
 }
 
 /* レスポンシブ対応 */

@@ -44,8 +44,10 @@ function updateDisplay() {
 function updateTimerColor() {
     if (isRunning) {
         timerDisplay.classList.remove('timer-stopped');
+        document.body.classList.add('timer-running');
     } else {
         timerDisplay.classList.add('timer-stopped');
+        document.body.classList.remove('timer-running');
     }
 }
 
@@ -67,11 +69,51 @@ function formatDateTime(date) {
 
 // 時刻をHH:MM形式で取得（表示用）
 function formatDateTimeForDisplay(timeString) {
-    // HH:MM:SS形式からHH:MM形式に変換
-    if (timeString && timeString.length === 8 && timeString.includes(':')) {
+    if (!timeString) return '';
+
+    // HH:MM:SS形式（8文字）からHH:MM形式に変換
+    if (timeString.length === 8 && timeString.split(':').length === 3) {
         return timeString.substring(0, 5); // 最初の5文字（HH:MM）を返す
     }
-    return timeString; // 既存のHH:MM形式の場合はそのまま返す
+    // HH:MM形式（5文字）の場合はそのまま返す
+    if (timeString.length === 5 && timeString.split(':').length === 2) {
+        return timeString;
+    }
+    // その他の形式（壊れている可能性）の場合は、最初の5文字を返すか、空文字を返す
+    const parts = timeString.split(':');
+    if (parts.length >= 2) {
+        return parts[0].padStart(2, '0') + ':' + parts[1].padStart(2, '0');
+    }
+    return timeString;
+}
+
+// 時刻をHH:MM:SS形式で取得（表示用、秒を含む）
+function formatDateTimeForDisplayWithSeconds(timeString) {
+    if (!timeString) return '';
+
+    // HH:MM:SS形式（8文字）の場合はそのまま返す
+    if (timeString.length === 8 && timeString.split(':').length === 3) {
+        return timeString;
+    }
+    // HH:MM形式（5文字）の場合は:00を追加
+    if (timeString.length === 5 && timeString.split(':').length === 2) {
+        return timeString + ':00';
+    }
+    // その他の形式の場合は正規化
+    const parts = timeString.split(':');
+    if (parts.length === 3) {
+        // 既に3つの部分がある場合は正規化
+        const hours = parts[0].padStart(2, '0');
+        const minutes = parts[1].padStart(2, '0');
+        const seconds = parts[2].padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+    } else if (parts.length === 2) {
+        // 2つの部分の場合は:00を追加
+        const hours = parts[0].padStart(2, '0');
+        const minutes = parts[1].padStart(2, '0');
+        return `${hours}:${minutes}:00`;
+    }
+    return timeString;
 }
 
 // 分数を時間:分形式で取得
@@ -90,15 +132,30 @@ function saveRecord() {
         return; // 記録すべきデータがない
     }
 
+    // 経過時間（ミリ秒）を正確に計算
     const endTime = new Date(recordStartTime.getTime() + elapsedTime);
     const durationMinutes = Math.floor(elapsedTime / 60000);
+    const durationSeconds = Math.floor((elapsedTime % 60000) / 1000); // 秒も計算
+
+    // 開始時刻と終了時刻を秒まで含めて保存（HH:MM:SS形式）
+    const startTimeStr = formatDateTime(recordStartTime); // HH:MM:SS形式
+    const endTimeStr = formatDateTime(endTime); // HH:MM:SS形式
+
+    // 秒が含まれていることを確認
+    if (startTimeStr.length !== 8 || startTimeStr.split(':').length !== 3) {
+        console.error('開始時刻の形式が正しくありません:', startTimeStr);
+    }
+    if (endTimeStr.length !== 8 || endTimeStr.split(':').length !== 3) {
+        console.error('終了時刻の形式が正しくありません:', endTimeStr);
+    }
 
     const record = {
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9), // 一意のID
         date: formatDate(recordStartTime),
-        startTime: formatDateTime(recordStartTime),
-        endTime: formatDateTime(endTime),
+        startTime: startTimeStr, // HH:MM:SS形式（秒まで含む）
+        endTime: endTimeStr, // HH:MM:SS形式（秒まで含む）
         duration: durationMinutes, // 分数
+        durationSeconds: durationSeconds, // 秒（追加情報として保存）
         description: currentDescription.trim(), // 作業内容
         tags: [...selectedTags] // 選択されたタグをコピー
     };
@@ -325,15 +382,21 @@ function displayRecords(targetDate = null) {
         const displayDate = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
         const description = record.description || '（作業内容なし）';
         const tagsText = record.tags.length > 0 ? ` [${record.tags.join(', ')}]` : '';
-        // 表示時は時:分のみ（秒は非表示）
-        const displayStartTime = formatDateTimeForDisplay(record.startTime);
-        const displayEndTime = formatDateTimeForDisplay(record.endTime);
+        // 表示時は時:分:秒形式で表示
+        const displayStartTime = formatDateTimeForDisplayWithSeconds(record.startTime);
+        const displayEndTime = formatDateTimeForDisplayWithSeconds(record.endTime);
 
         return `
-            <div class="record-item">
-                <div class="record-date">${displayDate}</div>
-                <div class="record-time">${displayStartTime} - ${displayEndTime} (${formatDuration(record.duration)})</div>
-                <div class="record-description">${description}${tagsText}</div>
+            <div class="record-item" data-record-id="${record.id}">
+                <div class="record-content">
+                    <div class="record-date">${displayDate}</div>
+                    <div class="record-time">${displayStartTime} - ${displayEndTime} (${formatDuration(record.duration)})</div>
+                    <div class="record-description">${description}${tagsText}</div>
+                </div>
+                <div class="record-actions">
+                    <button class="btn-edit-record" onclick="startEditRecord('${record.id}')">編集</button>
+                    <button class="btn-delete-record" onclick="handleDeleteRecord('${record.id}')">削除</button>
+                </div>
             </div>
         `;
     }).join('');
@@ -524,9 +587,386 @@ function handleDeleteTag(tagName) {
     }
 }
 
+// 記録を削除
+function deleteRecord(recordId) {
+    const records = loadRecords();
+    const filteredRecords = records.filter(record => record.id !== recordId);
+    localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(filteredRecords));
+
+    // 記録一覧とカレンダーを更新
+    if (selectedDate) {
+        displayRecords(selectedDate);
+    } else {
+        displayRecords();
+    }
+    renderCalendar();
+}
+
+// 記録削除処理
+function handleDeleteRecord(recordId) {
+    const records = loadRecords();
+    const record = records.find(r => r.id === recordId);
+    if (!record) return;
+
+    const displayStartTime = formatDateTimeForDisplay(record.startTime);
+    const displayEndTime = formatDateTimeForDisplay(record.endTime);
+    const description = record.description || '（作業内容なし）';
+
+    if (confirm(`この記録を削除しますか？\n\n${record.date}\n${displayStartTime} - ${displayEndTime}\n${description}`)) {
+        deleteRecord(recordId);
+    }
+}
+
+// 記録の編集を開始
+function startEditRecord(recordId) {
+    const records = loadRecords();
+    const record = records.find(r => r.id === recordId);
+    if (!record) return;
+
+    // 編集フォームを表示
+    const recordElement = document.querySelector(`[data-record-id="${recordId}"]`);
+    if (!recordElement) return;
+
+    // 時刻を<input type="time" step="1">用に変換
+    // record.startTime は HH:MM:SS 形式または HH:MM 形式の可能性がある
+    let startTimeForInput = record.startTime || '';
+    let endTimeForInput = record.endTime || '';
+
+    // 形式を確認して正規化（必ずHH:MM:SS形式にする）
+    const startParts = startTimeForInput.split(':');
+    if (startParts.length === 3) {
+        // 既にHH:MM:SS形式の場合は正規化（秒を2桁に）
+        const hours = startParts[0].padStart(2, '0');
+        const minutes = startParts[1].padStart(2, '0');
+        const seconds = startParts[2].padStart(2, '0');
+        startTimeForInput = `${hours}:${minutes}:${seconds}`;
+    } else if (startParts.length === 2) {
+        // HH:MM形式の場合は:00を追加
+        const hours = startParts[0].padStart(2, '0');
+        const minutes = startParts[1].padStart(2, '0');
+        startTimeForInput = `${hours}:${minutes}:00`;
+    } else if (startTimeForInput.length === 0) {
+        // 空の場合は現在時刻を使用
+        const now = new Date();
+        startTimeForInput = formatDateTime(now);
+    } else {
+        // 予期しない形式の場合はエラー
+        console.error('開始時刻の形式が正しくありません:', startTimeForInput);
+        const now = new Date();
+        startTimeForInput = formatDateTime(now);
+    }
+
+    const endParts = endTimeForInput.split(':');
+    if (endParts.length === 3) {
+        // 既にHH:MM:SS形式の場合は正規化（秒を2桁に）
+        const hours = endParts[0].padStart(2, '0');
+        const minutes = endParts[1].padStart(2, '0');
+        const seconds = endParts[2].padStart(2, '0');
+        endTimeForInput = `${hours}:${minutes}:${seconds}`;
+    } else if (endParts.length === 2) {
+        // HH:MM形式の場合は:00を追加
+        const hours = endParts[0].padStart(2, '0');
+        const minutes = endParts[1].padStart(2, '0');
+        endTimeForInput = `${hours}:${minutes}:00`;
+    } else if (endTimeForInput.length === 0) {
+        // 空の場合は現在時刻を使用
+        const now = new Date();
+        endTimeForInput = formatDateTime(now);
+    } else {
+        // 予期しない形式の場合はエラー
+        console.error('終了時刻の形式が正しくありません:', endTimeForInput);
+        const now = new Date();
+        endTimeForInput = formatDateTime(now);
+    }
+
+    // 最終チェック：必ずHH:MM:SS形式（8文字）であることを確認
+    if (startTimeForInput.length !== 8 || startTimeForInput.split(':').length !== 3) {
+        console.error('開始時刻の正規化に失敗:', startTimeForInput);
+        // フォールバック: 現在時刻を使用
+        const now = new Date();
+        startTimeForInput = formatDateTime(now);
+    }
+    if (endTimeForInput.length !== 8 || endTimeForInput.split(':').length !== 3) {
+        console.error('終了時刻の正規化に失敗:', endTimeForInput);
+        // フォールバック: 現在時刻を使用
+        const now = new Date();
+        endTimeForInput = formatDateTime(now);
+    }
+
+    // デバッグ用：値が正しく設定されているか確認
+    console.log('編集開始 - record.startTime:', record.startTime, '-> startTimeForInput:', startTimeForInput);
+    console.log('編集開始 - record.endTime:', record.endTime, '-> endTimeForInput:', endTimeForInput);
+
+    // タグチェックボックスを作成
+    const allTags = loadTags();
+    const tagCheckboxes = allTags.map(tag => {
+        const checked = record.tags.includes(tag) ? 'checked' : '';
+        return `
+            <label class="edit-tag-checkbox-label">
+                <input type="checkbox" class="edit-tag-checkbox" value="${tag}" ${checked}>
+                <span>${tag}</span>
+            </label>
+        `;
+    }).join('');
+
+    // 秒の情報を取得
+    const startSeconds = startTimeForInput.split(':').length === 3 ? startTimeForInput.split(':')[2] : '00';
+    const endSeconds = endTimeForInput.split(':').length === 3 ? endTimeForInput.split(':')[2] : '00';
+
+    recordElement.innerHTML = `
+        <div class="record-edit-form">
+            <div class="edit-form-row">
+                <label class="edit-label">日付:</label>
+                <input type="date" class="edit-date-input" value="${record.date}">
+            </div>
+            <div class="edit-form-row">
+                <label class="edit-label">開始時刻:</label>
+                <input type="time" class="edit-time-input edit-start-time" value="${startTimeForInput}" step="1" data-seconds="${startSeconds}" data-record-id="${recordId}">
+            </div>
+            <div class="edit-form-row">
+                <label class="edit-label">終了時刻:</label>
+                <input type="time" class="edit-time-input edit-end-time" value="${endTimeForInput}" step="1" data-seconds="${endSeconds}" data-record-id="${recordId}">
+            </div>
+            <div class="edit-form-row">
+                <label class="edit-label">作業内容:</label>
+                <input type="text" class="edit-description-input" value="${record.description || ''}" placeholder="作業内容を入力">
+            </div>
+            <div class="edit-form-row">
+                <label class="edit-label">タグ:</label>
+                <div class="edit-tag-checkboxes">
+                    ${tagCheckboxes || '<span class="no-tags">タグがありません</span>'}
+                </div>
+            </div>
+            <div class="edit-form-actions">
+                <button class="btn-save-record" onclick="saveEditedRecord('${recordId}')">保存</button>
+                <button class="btn-cancel-edit" onclick="cancelEditRecord('${recordId}')">キャンセル</button>
+            </div>
+        </div>
+    `;
+
+    // input要素の変更時に秒の情報をdata-seconds属性に保存
+    const startTimeInputElement = recordElement.querySelector('.edit-start-time');
+    const endTimeInputElement = recordElement.querySelector('.edit-end-time');
+
+    if (startTimeInputElement) {
+        // 初期値の秒を保持
+        let currentStartSeconds = startSeconds;
+
+        startTimeInputElement.addEventListener('change', function () {
+            // valueからHH:MM:SS形式で取得を試みる
+            const value = this.value;
+            // step="1"を使っている場合、valueはHH:MM:SS形式になる可能性がある
+            if (value && value.includes(':') && value.split(':').length === 3) {
+                const seconds = value.split(':')[2];
+                currentStartSeconds = seconds.padStart(2, '0');
+                this.setAttribute('data-seconds', currentStartSeconds);
+            } else if (value && value.includes(':') && value.split(':').length === 2) {
+                // HH:MM形式の場合は、既存の秒を保持
+                this.setAttribute('data-seconds', currentStartSeconds);
+            }
+        });
+
+        startTimeInputElement.addEventListener('input', function () {
+            // リアルタイムで秒を更新（step="1"の場合）
+            const value = this.value;
+            if (value && value.includes(':') && value.split(':').length === 3) {
+                const seconds = value.split(':')[2];
+                currentStartSeconds = seconds.padStart(2, '0');
+                this.setAttribute('data-seconds', currentStartSeconds);
+            }
+        });
+    }
+
+    if (endTimeInputElement) {
+        // 初期値の秒を保持
+        let currentEndSeconds = endSeconds;
+
+        endTimeInputElement.addEventListener('change', function () {
+            // valueからHH:MM:SS形式で取得を試みる
+            const value = this.value;
+            if (value && value.includes(':') && value.split(':').length === 3) {
+                const seconds = value.split(':')[2];
+                currentEndSeconds = seconds.padStart(2, '0');
+                this.setAttribute('data-seconds', currentEndSeconds);
+            } else if (value && value.includes(':') && value.split(':').length === 2) {
+                // HH:MM形式の場合は、既存の秒を保持
+                this.setAttribute('data-seconds', currentEndSeconds);
+            }
+        });
+
+        endTimeInputElement.addEventListener('input', function () {
+            // リアルタイムで秒を更新（step="1"の場合）
+            const value = this.value;
+            if (value && value.includes(':') && value.split(':').length === 3) {
+                const seconds = value.split(':')[2];
+                currentEndSeconds = seconds.padStart(2, '0');
+                this.setAttribute('data-seconds', currentEndSeconds);
+            }
+        });
+    }
+}
+
+// 編集をキャンセル
+function cancelEditRecord(recordId) {
+    // 記録一覧を再表示
+    if (selectedDate) {
+        displayRecords(selectedDate);
+    } else {
+        displayRecords();
+    }
+}
+
+// 編集した記録を保存
+function saveEditedRecord(recordId) {
+    const recordElement = document.querySelector(`[data-record-id="${recordId}"]`);
+    if (!recordElement) return;
+
+    const dateInput = recordElement.querySelector('.edit-date-input');
+    // より確実なセレクターを使用
+    const startTimeInput = recordElement.querySelector('.edit-start-time') || recordElement.querySelector('.edit-time-input:first-of-type');
+    const endTimeInput = recordElement.querySelector('.edit-end-time') || recordElement.querySelectorAll('.edit-time-input')[1];
+    const descriptionInput = recordElement.querySelector('.edit-description-input');
+    const tagCheckboxes = recordElement.querySelectorAll('.edit-tag-checkbox:checked');
+
+    if (!dateInput || !startTimeInput || !endTimeInput || !descriptionInput) return;
+
+    const newDate = dateInput.value;
+    // <input type="time" step="1">から取得した値の処理
+    // valueは"HH:MM"形式で返される（秒は別途data-seconds属性から取得）
+    let startTimeValue = startTimeInput.value || '';
+    let endTimeValue = endTimeInput.value || '';
+
+    // data-seconds属性から秒を取得（存在しない場合は'00'）
+    const startSeconds = startTimeInput.getAttribute('data-seconds') || '00';
+    const endSeconds = endTimeInput.getAttribute('data-seconds') || '00';
+
+    // デバッグ用：入力値を確認
+    console.log('保存前 - startTimeInput.value:', startTimeValue, 'data-seconds:', startSeconds);
+    console.log('保存前 - endTimeInput.value:', endTimeValue, 'data-seconds:', endSeconds);
+
+    // HH:MM:SS形式に変換
+    let newStartTime = '';
+    let newEndTime = '';
+
+    // 開始時刻の処理
+    if (startTimeValue) {
+        const startParts = startTimeValue.split(':');
+        if (startParts.length === 2) {
+            // HH:MM形式に秒を追加
+            const hours = startParts[0].padStart(2, '0');
+            const minutes = startParts[1].padStart(2, '0');
+            const seconds = String(parseInt(startSeconds) || 0).padStart(2, '0');
+            newStartTime = `${hours}:${minutes}:${seconds}`;
+        } else if (startParts.length === 3) {
+            // 既にHH:MM:SS形式の場合はそのまま使用（ただし秒を上書き）
+            const hours = startParts[0].padStart(2, '0');
+            const minutes = startParts[1].padStart(2, '0');
+            const seconds = String(parseInt(startParts[2]) || parseInt(startSeconds) || 0).padStart(2, '0');
+            newStartTime = `${hours}:${minutes}:${seconds}`;
+        } else {
+            alert('開始時刻の形式が正しくありません');
+            return;
+        }
+    } else {
+        alert('開始時刻を入力してください');
+        return;
+    }
+
+    // 終了時刻の処理
+    if (endTimeValue) {
+        const endParts = endTimeValue.split(':');
+        if (endParts.length === 2) {
+            // HH:MM形式に秒を追加
+            const hours = endParts[0].padStart(2, '0');
+            const minutes = endParts[1].padStart(2, '0');
+            const seconds = String(parseInt(endSeconds) || 0).padStart(2, '0');
+            newEndTime = `${hours}:${minutes}:${seconds}`;
+        } else if (endParts.length === 3) {
+            // 既にHH:MM:SS形式の場合はそのまま使用（ただし秒を上書き）
+            const hours = endParts[0].padStart(2, '0');
+            const minutes = endParts[1].padStart(2, '0');
+            const seconds = String(parseInt(endParts[2]) || parseInt(endSeconds) || 0).padStart(2, '0');
+            newEndTime = `${hours}:${minutes}:${seconds}`;
+        } else {
+            alert('終了時刻の形式が正しくありません');
+            return;
+        }
+    } else {
+        alert('終了時刻を入力してください');
+        return;
+    }
+
+    // 最終チェック：形式が正しいか（HH:MM:SS、8文字）
+    if (newStartTime.length !== 8 || newStartTime.split(':').length !== 3) {
+        alert('開始時刻の形式が正しくありません: ' + newStartTime);
+        return;
+    }
+    if (newEndTime.length !== 8 || newEndTime.split(':').length !== 3) {
+        alert('終了時刻の形式が正しくありません: ' + newEndTime);
+        return;
+    }
+
+    const newDescription = descriptionInput.value.trim();
+    const newTags = Array.from(tagCheckboxes).map(cb => cb.value);
+
+    // 時刻のバリデーション（Date オブジェクトで比較）
+    const tempStartDate = new Date(`2000-01-01T${newStartTime}`);
+    const tempEndDate = new Date(`2000-01-01T${newEndTime}`);
+    if (tempStartDate >= tempEndDate) {
+        alert('終了時刻は開始時刻より後である必要があります');
+        return;
+    }
+
+    // 時間差を計算してdurationを更新
+    // ISO形式で日時を作成（YYYY-MM-DDTHH:mm:ss）
+    const startDate = new Date(`${newDate}T${newStartTime}`);
+    const endDate = new Date(`${newDate}T${newEndTime}`);
+
+    // 日付が同じ日の場合は終了時刻が開始時刻より前の可能性があるので、1日追加
+    if (endDate < startDate) {
+        endDate.setDate(endDate.getDate() + 1);
+    }
+
+    const durationMinutes = Math.floor((endDate - startDate) / 60000);
+
+    if (durationMinutes <= 0) {
+        alert('作業時間は1分以上である必要があります');
+        return;
+    }
+
+    // 記録を更新
+    const records = loadRecords();
+    const recordIndex = records.findIndex(r => r.id === recordId);
+    if (recordIndex === -1) return;
+
+    records[recordIndex] = {
+        ...records[recordIndex],
+        date: newDate,
+        startTime: newStartTime,
+        endTime: newEndTime,
+        duration: durationMinutes,
+        description: newDescription,
+        tags: newTags
+    };
+
+    localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
+
+    // 記録一覧とカレンダーを更新
+    if (selectedDate) {
+        displayRecords(selectedDate);
+    } else {
+        displayRecords();
+    }
+    renderCalendar();
+}
+
 // グローバルスコープに公開（onchange/onclickから呼び出すため）
 window.toggleTag = toggleTag;
 window.handleDeleteTag = handleDeleteTag;
+window.handleDeleteRecord = handleDeleteRecord;
+window.startEditRecord = startEditRecord;
+window.cancelEditRecord = cancelEditRecord;
+window.saveEditedRecord = saveEditedRecord;
 
 // タグ追加処理
 function handleAddTag() {
