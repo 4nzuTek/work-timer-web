@@ -6,6 +6,13 @@ let isRunning = false;
 let recordStartTime = null; // 記録開始時刻（Date オブジェクト）
 let selectedTags = []; // 選択中のタグ
 let currentDescription = ''; // 現在の作業内容
+let voiceInterval = null; // ボイス再生用のタイマー
+let voiceAudio = null; // ボイス用のaudio要素
+let voiceIntervalSeconds = 15; // ボイス再生間隔（秒）
+let bgmMuted = false; // BGMミュート状態
+let voiceMuted = false; // ボイスミュート状態
+let bgmVolumeBeforeMute = 50; // ミュート前のBGM音量
+let voiceVolumeBeforeMute = 50; // ミュート前のボイス音量
 
 // カレンダーの状態管理
 let currentCalendarDate = new Date(); // カレンダーで表示している年月
@@ -14,6 +21,202 @@ let selectedDate = null; // 選択中の日付（YYYY-MM-DD形式）
 // ローカルストレージのキー
 const STORAGE_KEY_RECORDS = 'workingTimer_records';
 const STORAGE_KEY_TAGS = 'workingTimer_tags';
+const STORAGE_KEY_VOLUME = 'workingTimer_volume';
+const STORAGE_KEY_VOICE_VOLUME = 'workingTimer_voice_volume';
+const STORAGE_KEY_VOICE_INTERVAL = 'workingTimer_voice_interval';
+const STORAGE_KEY_BGM_MUTED = 'workingTimer_bgm_muted';
+const STORAGE_KEY_VOICE_MUTED = 'workingTimer_voice_muted';
+
+// ボイスファイルのリスト（動的に読み込む）
+let CHEER_VOICE_FILES = [];
+let START_VOICE_FILES = []; // スタートボイスファイルのリスト
+let END_VOICE_FILES = []; // エンドボイスファイルのリスト
+
+// 既知のボイスファイルリスト（サーバー環境ではPHPスクリプトで自動検出される）
+const KNOWN_VOICE_FILES = [
+    'cheer_voice/001_ずんだもん（ノーマル）_集中できててえらい….wav',
+    'cheer_voice/002_ずんだもん（ノーマル）_ちょっと疲れたら深….wav',
+    'cheer_voice/003_ずんだもん（ノーマル）_がんばってる姿かっ….wav',
+    'cheer_voice/004_ずんだもん（ノーマル）_無理しなくていいの….wav',
+    'cheer_voice/005_ずんだもん（ノーマル）_ふふん、このペース….wav',
+    'cheer_voice/006_ずんだもん（ノーマル）_やる気どんどん湧い….wav',
+    'cheer_voice/007_ずんだもん（ノーマル）_あきらめたらもった….wav',
+    'cheer_voice/008_ずんだもん（ノーマル）_目がしょぼしょぼし….wav',
+    'cheer_voice/009_ずんだもん（ノーマル）_静かな集中、いい感….wav',
+    'cheer_voice/010_ずんだもん（ノーマル）_パワー全開なのだ！….wav',
+    'cheer_voice/011_ずんだもん（ノーマル）_集中してる顔、すご….wav',
+    'cheer_voice/012_ずんだもん（ノーマル）_小さな一歩でも、ち….wav',
+    'cheer_voice/013_ずんだもん（ノーマル）_手を止めないで、そ….wav',
+    'cheer_voice/014_ずんだもん（ノーマル）_やればやるほど、上….wav',
+    'cheer_voice/015_ずんだもん（ノーマル）_今のリズム、すごく….wav',
+    'cheer_voice/016_ずんだもん（ノーマル）_少しずつでも積み重….wav',
+    'cheer_voice/017_ずんだもん（ノーマル）_集中モード突入なの….wav',
+    'cheer_voice/018_ずんだもん（ノーマル）_やりたい気持ちがあ….wav',
+    'cheer_voice/019_ずんだもん（ノーマル）_ミスしても大丈夫な….wav',
+    'cheer_voice/020_ずんだもん（ノーマル）_思ったより進んでる….wav',
+    'cheer_voice/021_ずんだもん（ノーマル）_ちょっと息抜きして….wav',
+    'cheer_voice/022_ずんだもん（ノーマル）_大丈夫、できるのだ….wav',
+    'cheer_voice/023_ずんだもん（ノーマル）_一瞬の迷いなんて気….wav',
+    'cheer_voice/024_ずんだもん（ノーマル）_頭の中がすっきりし….wav',
+    'cheer_voice/025_ずんだもん（ノーマル）_何度だって挑戦でき….wav',
+    'cheer_voice/026_ずんだもん（ノーマル）_自分のペースでいい….wav',
+    'cheer_voice/027_ずんだもん（ノーマル）_静かに燃えてる感じ….wav',
+    'cheer_voice/028_ずんだもん（ノーマル）_やり切った後の達成….wav',
+    'cheer_voice/029_ずんだもん（ノーマル）_休むのも戦略なのだ….wav',
+    'cheer_voice/030_ずんだもん（ノーマル）_最後までやり抜いた….wav'
+];
+
+// ボイスファイルリストを動的に検出する
+async function loadCheerVoiceFiles() {
+    // 方法1: PHPスクリプトでディレクトリをスキャン（サーバー環境の場合のみ）
+    // file://プロトコルでは動作しないため、http/https環境でのみ実行
+    if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+        try {
+            const response = await fetch('get_voice_files.php?type=cheer');
+            if (response.ok) {
+                const files = await response.json();
+                if (files && Array.isArray(files) && files.length > 0) {
+                    CHEER_VOICE_FILES = files;
+                    console.log(`ボイスファイル ${CHEER_VOICE_FILES.length}個を自動検出しました`);
+                    return;
+                }
+            }
+        } catch (error) {
+            console.warn('PHPスクリプトでの検出に失敗しました（サーバー環境でない可能性があります）:', error);
+        }
+
+        // 方法2: ディレクトリリスティングから取得（サーバーが許可している場合）
+        try {
+            const files = await getFilesFromDirectoryListing('cheer_voice/');
+            if (files.length > 0) {
+                CHEER_VOICE_FILES = files;
+                console.log(`ディレクトリリスティングから ${CHEER_VOICE_FILES.length}個のファイルを検出しました`);
+                return;
+            }
+        } catch (error) {
+            console.warn('ディレクトリリスティングの取得に失敗しました:', error);
+        }
+    }
+
+    // 方法3: 既知のファイルリストを使用（ローカルファイルやサーバーでの自動検出失敗時）
+    console.log('既知のファイルリストを使用します');
+    CHEER_VOICE_FILES = KNOWN_VOICE_FILES;
+    console.log(`ボイスファイル ${CHEER_VOICE_FILES.length}個を読み込みました`);
+}
+
+// スタートボイスファイルリストを動的に検出する
+async function loadStartVoiceFiles() {
+    // 方法1: PHPスクリプトでディレクトリをスキャン（サーバー環境の場合のみ）
+    if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+        try {
+            const response = await fetch('get_voice_files.php?type=start');
+            if (response.ok) {
+                const files = await response.json();
+                if (files && Array.isArray(files) && files.length > 0) {
+                    START_VOICE_FILES = files;
+                    console.log(`スタートボイスファイル ${START_VOICE_FILES.length}個を自動検出しました`);
+                    return;
+                }
+            }
+        } catch (error) {
+            console.warn('PHPスクリプトでのスタートボイス検出に失敗しました:', error);
+        }
+
+        // 方法2: ディレクトリリスティングから取得
+        try {
+            const files = await getFilesFromDirectoryListing('start_voice/');
+            if (files.length > 0) {
+                START_VOICE_FILES = files;
+                console.log(`ディレクトリリスティングからスタートボイス ${START_VOICE_FILES.length}個を検出しました`);
+                return;
+            }
+        } catch (error) {
+            console.warn('ディレクトリリスティングの取得に失敗しました:', error);
+        }
+    }
+
+    // 方法3: 既知のファイルリストを使用
+    console.log('既知のスタートボイスファイルリストを使用します');
+    START_VOICE_FILES = KNOWN_START_VOICE_FILES;
+    console.log(`スタートボイスファイル ${START_VOICE_FILES.length}個を読み込みました`);
+}
+
+// エンドボイスファイルリストを動的に検出する
+async function loadEndVoiceFiles() {
+    // 方法1: PHPスクリプトでディレクトリをスキャン（サーバー環境の場合のみ）
+    if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+        try {
+            const response = await fetch('get_voice_files.php?type=end');
+            if (response.ok) {
+                const files = await response.json();
+                if (files && Array.isArray(files) && files.length > 0) {
+                    END_VOICE_FILES = files;
+                    console.log(`エンドボイスファイル ${END_VOICE_FILES.length}個を自動検出しました`);
+                    return;
+                }
+            }
+        } catch (error) {
+            console.warn('PHPスクリプトでのエンドボイス検出に失敗しました:', error);
+        }
+
+        // 方法2: ディレクトリリスティングから取得
+        try {
+            const files = await getFilesFromDirectoryListing('end_voice/');
+            if (files.length > 0) {
+                END_VOICE_FILES = files;
+                console.log(`ディレクトリリスティングからエンドボイス ${END_VOICE_FILES.length}個を検出しました`);
+                return;
+            }
+        } catch (error) {
+            console.warn('ディレクトリリスティングの取得に失敗しました:', error);
+        }
+    }
+
+    // 方法3: 既知のファイルリストを使用
+    console.log('既知のエンドボイスファイルリストを使用します');
+    END_VOICE_FILES = KNOWN_END_VOICE_FILES;
+    console.log(`エンドボイスファイル ${END_VOICE_FILES.length}個を読み込みました`);
+}
+
+// 既知のスタートボイスファイルリスト（フォールバック用）
+const KNOWN_START_VOICE_FILES = [
+    'start_voice/001_ずんだもん（ノーマル）_作業、スタートなの….wav'
+];
+
+// 既知のエンドボイスファイルリスト（フォールバック用）
+const KNOWN_END_VOICE_FILES = [
+    'end_voice/002_ずんだもん（ノーマル）_お疲れ様なのだ！よ….wav'
+];
+
+// ディレクトリリスティングからファイルを取得（サーバー環境のみ）
+async function getFilesFromDirectoryListing(dir = 'cheer_voice/') {
+    try {
+        const response = await fetch(dir);
+        if (!response.ok) return [];
+
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const links = doc.querySelectorAll('a[href]');
+
+        const files = [];
+        const audioExtensions = ['.wav', '.mp3', '.ogg', '.m4a', '.aac'];
+
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href !== '../' && href !== './') {
+                const lowerHref = href.toLowerCase();
+                if (audioExtensions.some(ext => lowerHref.endsWith(ext))) {
+                    files.push(`${dir}${href}`);
+                }
+            }
+        });
+
+        return files.sort();
+    } catch {
+        return [];
+    }
+}
 
 // DOM要素の取得
 const timerDisplay = document.getElementById('timerDisplay');
@@ -26,6 +229,14 @@ const calendarMonthYear = document.getElementById('calendarMonthYear');
 const prevMonthBtn = document.getElementById('prevMonthBtn');
 const nextMonthBtn = document.getElementById('nextMonthBtn');
 const recordsSectionTitle = document.getElementById('recordsSectionTitle');
+const bgmAudio = document.getElementById('bgmAudio');
+const bgmVolumeSlider = document.getElementById('bgmVolumeSlider');
+const bgmVolumeValue = document.getElementById('bgmVolumeValue');
+const bgmMuteBtn = document.getElementById('bgmMuteBtn');
+const voiceVolumeSlider = document.getElementById('voiceVolumeSlider');
+const voiceVolumeValue = document.getElementById('voiceVolumeValue');
+const voiceMuteBtn = document.getElementById('voiceMuteBtn');
+const voiceIntervalInput = document.getElementById('voiceIntervalInput');
 
 // 時刻をMM:SS形式で表示する関数
 function formatTime(seconds) {
@@ -126,8 +337,8 @@ function formatDuration(minutes) {
     return `${mins}分`;
 }
 
-// 記録を作成して保存
-function saveRecord() {
+// 記録を作成して保存（エンドボイス再生なし）
+function saveRecordWithoutEndVoice() {
     if (recordStartTime === null || elapsedTime === 0) {
         return; // 記録すべきデータがない
     }
@@ -178,11 +389,14 @@ function saveRecord() {
     // カレンダーを更新（記録がある日のマーカーを更新するため）
     renderCalendar();
 
-    // 選択タグと作業内容をリセット
-    selectedTags = [];
-    currentDescription = '';
-    updateTagCheckboxes();
-    updateDescriptionInput();
+    // タグと作業内容はリセットしない（次の作業でも使えるように保持）
+}
+
+// 記録を作成して保存（後方互換性のため残す）
+function saveRecord() {
+    saveRecordWithoutEndVoice();
+    // 直接呼ばれた場合はエンドボイスも再生
+    playEndVoice();
 }
 
 // ローカルストレージから記録を読み込み
@@ -249,6 +463,379 @@ function deleteTag(tagName) {
     return false;
 }
 
+// BGMを再生
+function playBGM() {
+    if (bgmAudio) {
+        bgmAudio.play().catch(error => {
+            console.error('BGMの再生に失敗しました:', error);
+        });
+    }
+}
+
+// BGMを停止
+function stopBGM() {
+    if (bgmAudio) {
+        bgmAudio.pause();
+        bgmAudio.currentTime = 0; // 再生位置をリセット
+    }
+}
+
+// ランダムにボイスを再生
+function playRandomCheerVoice() {
+    if (CHEER_VOICE_FILES.length === 0) return;
+    if (voiceMuted) return; // ミュート中は再生しない
+
+    // ランダムに1つ選択
+    const randomIndex = Math.floor(Math.random() * CHEER_VOICE_FILES.length);
+    const voiceFile = CHEER_VOICE_FILES[randomIndex];
+
+    // 既存のaudio要素があれば削除
+    if (voiceAudio) {
+        voiceAudio.pause();
+        voiceAudio = null;
+    }
+
+    // 新しいaudio要素を作成
+    voiceAudio = new Audio(voiceFile);
+
+    // 現在のボイス音量を設定（ミュート状態を考慮）
+    const stored = localStorage.getItem(STORAGE_KEY_VOICE_VOLUME);
+    const volume = stored ? parseInt(stored, 10) : 50;
+    voiceAudio.volume = voiceMuted ? 0 : volume / 100;
+
+    // 再生
+    voiceAudio.play().catch(error => {
+        console.error('ボイスの再生に失敗しました:', error);
+    });
+
+    // 再生終了時にaudio要素をクリア
+    voiceAudio.onended = () => {
+        voiceAudio = null;
+    };
+}
+
+// スタートボイスを再生
+function playStartVoice() {
+    if (voiceMuted) return; // ミュート中は再生しない
+    if (START_VOICE_FILES.length === 0) return; // ファイルがない場合は再生しない
+
+    // 既存のaudio要素を確実に停止して削除
+    if (voiceAudio) {
+        try {
+            voiceAudio.pause();
+            voiceAudio.currentTime = 0;
+        } catch (e) {
+            // エラーは無視
+        }
+        voiceAudio = null;
+    }
+
+    // 少し待ってから新しい音声を再生（前の音声が完全に停止するまで待つ）
+    setTimeout(() => {
+        // ランダムに1つ選択（複数ある場合）
+        const randomIndex = Math.floor(Math.random() * START_VOICE_FILES.length);
+        const startVoiceFile = START_VOICE_FILES[randomIndex];
+
+        // 新しいaudio要素を作成
+        const startAudio = new Audio(startVoiceFile);
+
+        // 現在のボイス音量を設定
+        const stored = localStorage.getItem(STORAGE_KEY_VOICE_VOLUME);
+        const volume = stored ? parseInt(stored, 10) : 50;
+        startAudio.volume = voiceMuted ? 0 : volume / 100;
+
+        // 再生
+        const playPromise = startAudio.play();
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    // 再生成功
+                    voiceAudio = startAudio;
+                })
+                .catch(error => {
+                    // 中断された場合などのエラーは無視（AbortErrorなど）
+                    if (error.name !== 'AbortError' && error.name !== 'NotAllowedError') {
+                        console.warn('スタートボイスの再生に失敗しました:', error);
+                    }
+                    voiceAudio = null;
+                });
+        }
+
+        // 再生終了時にaudio要素をクリア
+        startAudio.onended = () => {
+            if (voiceAudio === startAudio) {
+                voiceAudio = null;
+            }
+        };
+    }, 50); // 50ms待機
+}
+
+// エンドボイスを再生
+function playEndVoice() {
+    if (voiceMuted) return; // ミュート中は再生しない
+    if (END_VOICE_FILES.length === 0) return; // ファイルがない場合は再生しない
+
+    // 既存のaudio要素を確実に停止して削除
+    if (voiceAudio) {
+        try {
+            voiceAudio.pause();
+            voiceAudio.currentTime = 0;
+        } catch (e) {
+            // エラーは無視
+        }
+        voiceAudio = null;
+    }
+
+    // 少し待ってから新しい音声を再生（前の音声が完全に停止するまで待つ）
+    setTimeout(() => {
+        // ランダムに1つ選択（複数ある場合）
+        const randomIndex = Math.floor(Math.random() * END_VOICE_FILES.length);
+        const endVoiceFile = END_VOICE_FILES[randomIndex];
+
+        // 新しいaudio要素を作成
+        const endAudio = new Audio(endVoiceFile);
+
+        // 現在のボイス音量を設定
+        const stored = localStorage.getItem(STORAGE_KEY_VOICE_VOLUME);
+        const volume = stored ? parseInt(stored, 10) : 50;
+        endAudio.volume = voiceMuted ? 0 : volume / 100;
+
+        // 再生
+        const playPromise = endAudio.play();
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    // 再生成功
+                    voiceAudio = endAudio;
+                })
+                .catch(error => {
+                    // 中断された場合などのエラーは無視（AbortErrorなど）
+                    if (error.name !== 'AbortError' && error.name !== 'NotAllowedError') {
+                        console.warn('エンドボイスの再生に失敗しました:', error);
+                    }
+                    voiceAudio = null;
+                });
+        }
+
+        // 再生終了時にaudio要素をクリア
+        endAudio.onended = () => {
+            if (voiceAudio === endAudio) {
+                voiceAudio = null;
+            }
+        };
+    }, 50); // 50ms待機
+}
+
+// ボイス再生タイマーを開始
+function startVoiceTimer() {
+    // 既存のタイマーがあればクリア
+    stopVoiceTimer();
+
+    // 設定された間隔ごとにボイスを再生（即座には再生しない）
+    const intervalMs = voiceIntervalSeconds * 1000;
+    voiceInterval = setInterval(() => {
+        if (isRunning) {
+            playRandomCheerVoice();
+        }
+    }, intervalMs);
+}
+
+// ボイス再生タイマーを停止
+function stopVoiceTimer() {
+    if (voiceInterval) {
+        clearInterval(voiceInterval);
+        voiceInterval = null;
+    }
+    // 再生中のボイスがあれば停止
+    if (voiceAudio) {
+        voiceAudio.pause();
+        voiceAudio = null;
+    }
+}
+
+// BGM音量を設定
+function setBGMVolume(volume, updateMuteState = true) {
+    if (bgmAudio && !bgmMuted) {
+        // 0-100の値を0.0-0.5に変換（ベースを半分にする）
+        // スライダー値100が実際の音量50%になる
+        bgmAudio.volume = (volume / 100) * 0.5;
+    } else if (bgmAudio && bgmMuted) {
+        // ミュート中は音量を0にする
+        bgmAudio.volume = 0;
+    }
+    if (bgmVolumeSlider) {
+        bgmVolumeSlider.value = volume;
+    }
+    if (bgmVolumeValue) {
+        bgmVolumeValue.textContent = volume;
+    }
+
+    // ミュート状態を更新しない場合は音量のみ保存
+    if (updateMuteState && !bgmMuted) {
+        bgmVolumeBeforeMute = volume;
+    }
+
+    // ローカルストレージに保存
+    localStorage.setItem(STORAGE_KEY_VOLUME, volume.toString());
+    updateBGMMuteButton();
+}
+
+// BGMミュートを切り替え
+function toggleBGMMute() {
+    bgmMuted = !bgmMuted;
+
+    if (bgmMuted) {
+        // ミュート: 音量を保存して0にする
+        bgmVolumeBeforeMute = parseInt(bgmVolumeSlider.value, 10);
+        if (bgmAudio) {
+            bgmAudio.volume = 0;
+        }
+    } else {
+        // ミュート解除: 保存した音量に戻す
+        if (bgmAudio) {
+            bgmAudio.volume = (bgmVolumeBeforeMute / 100) * 0.5;
+        }
+    }
+
+    localStorage.setItem(STORAGE_KEY_BGM_MUTED, bgmMuted.toString());
+    updateBGMMuteButton();
+}
+
+// BGMミュートボタンの表示を更新
+function updateBGMMuteButton() {
+    if (bgmMuteBtn) {
+        bgmMuteBtn.textContent = bgmMuted ? '🔇' : '🔊';
+        bgmMuteBtn.title = bgmMuted ? 'ミュート解除' : 'ミュート';
+    }
+}
+
+// ボイス音量を設定
+function setVoiceVolume(volume, updateMuteState = true) {
+    if (voiceAudio && !voiceMuted) {
+        // 0-100の値を0.0-1.0に変換
+        voiceAudio.volume = volume / 100;
+    } else if (voiceAudio && voiceMuted) {
+        // ミュート中は音量を0にする
+        voiceAudio.volume = 0;
+    }
+    if (voiceVolumeSlider) {
+        voiceVolumeSlider.value = volume;
+    }
+    if (voiceVolumeValue) {
+        voiceVolumeValue.textContent = volume;
+    }
+
+    // ミュート状態を更新しない場合は音量のみ保存
+    if (updateMuteState && !voiceMuted) {
+        voiceVolumeBeforeMute = volume;
+    }
+
+    // ローカルストレージに保存
+    localStorage.setItem(STORAGE_KEY_VOICE_VOLUME, volume.toString());
+    updateVoiceMuteButton();
+}
+
+// ボイスミュートを切り替え
+function toggleVoiceMute() {
+    voiceMuted = !voiceMuted;
+
+    if (voiceMuted) {
+        // ミュート: 音量を保存して0にする
+        voiceVolumeBeforeMute = parseInt(voiceVolumeSlider.value, 10);
+        if (voiceAudio) {
+            voiceAudio.volume = 0;
+        }
+    } else {
+        // ミュート解除: 保存した音量に戻す
+        if (voiceAudio) {
+            voiceAudio.volume = voiceVolumeBeforeMute / 100;
+        }
+    }
+
+    localStorage.setItem(STORAGE_KEY_VOICE_MUTED, voiceMuted.toString());
+    updateVoiceMuteButton();
+}
+
+// ボイスミュートボタンの表示を更新
+function updateVoiceMuteButton() {
+    if (voiceMuteBtn) {
+        voiceMuteBtn.textContent = voiceMuted ? '🔇' : '🔊';
+        voiceMuteBtn.title = voiceMuted ? 'ミュート解除' : 'ミュート';
+    }
+}
+
+// BGM音量を読み込み
+function loadBGMVolume() {
+    const stored = localStorage.getItem(STORAGE_KEY_VOLUME);
+    let volume = 50;
+    if (stored) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+            volume = parsed;
+        }
+    }
+    bgmVolumeBeforeMute = volume;
+
+    // ミュート状態を読み込み
+    const mutedStored = localStorage.getItem(STORAGE_KEY_BGM_MUTED);
+    bgmMuted = mutedStored === 'true';
+
+    setBGMVolume(volume, false);
+}
+
+// ボイス音量を読み込み
+function loadVoiceVolume() {
+    const stored = localStorage.getItem(STORAGE_KEY_VOICE_VOLUME);
+    let volume = 50;
+    if (stored) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+            volume = parsed;
+        }
+    }
+    voiceVolumeBeforeMute = volume;
+
+    // ミュート状態を読み込み
+    const mutedStored = localStorage.getItem(STORAGE_KEY_VOICE_MUTED);
+    voiceMuted = mutedStored === 'true';
+
+    setVoiceVolume(volume, false);
+}
+
+// ボイス間隔を設定
+function setVoiceInterval(seconds) {
+    if (seconds < 1) seconds = 1;
+    if (seconds > 300) seconds = 300;
+
+    voiceIntervalSeconds = seconds;
+
+    if (voiceIntervalInput) {
+        voiceIntervalInput.value = seconds;
+    }
+
+    // ローカルストレージに保存
+    localStorage.setItem(STORAGE_KEY_VOICE_INTERVAL, seconds.toString());
+
+    // タイマーが実行中の場合、再起動して新しい間隔を適用
+    if (isRunning && voiceInterval) {
+        startVoiceTimer();
+    }
+}
+
+// ボイス間隔を読み込み
+function loadVoiceInterval() {
+    const stored = localStorage.getItem(STORAGE_KEY_VOICE_INTERVAL);
+    if (stored) {
+        const seconds = parseInt(stored, 10);
+        if (!isNaN(seconds) && seconds >= 1 && seconds <= 300) {
+            setVoiceInterval(seconds);
+            return;
+        }
+    }
+    // デフォルト間隔15秒
+    setVoiceInterval(15);
+}
+
 // タイマーを開始する関数
 function startTimer() {
     if (!isRunning) {
@@ -257,9 +844,16 @@ function startTimer() {
         // 経過時間が0の場合（新規開始）、記録開始時刻と作業内容を設定
         if (elapsedTime === 0) {
             recordStartTime = new Date();
-            // 作業内容を保存
+            // 作業内容を保存（入力欄の値を優先、空の場合は既存のcurrentDescriptionを保持）
             if (descriptionInput) {
-                currentDescription = descriptionInput.value.trim();
+                const inputValue = descriptionInput.value.trim();
+                if (inputValue !== '') {
+                    currentDescription = inputValue;
+                }
+                // 入力欄が空で、currentDescriptionがある場合は入力欄に反映
+                if (inputValue === '' && currentDescription !== '') {
+                    descriptionInput.value = currentDescription;
+                }
             }
         }
 
@@ -275,6 +869,17 @@ function startTimer() {
 
         // 入力欄を無効化
         updateDescriptionInput();
+
+        // BGMを再生
+        playBGM();
+
+        // 経過時間が0の場合（新規開始）、スタートボイスを再生
+        if (elapsedTime === 0) {
+            playStartVoice();
+        }
+
+        // ボイス再生タイマーを開始
+        startVoiceTimer();
 
         // タイマーの色を更新
         updateTimerColor();
@@ -299,6 +904,12 @@ function pauseTimer() {
         // 入力欄の状態を更新（一時停止中は編集不可のまま）
         updateDescriptionInput();
 
+        // BGMを停止
+        stopBGM();
+
+        // ボイス再生タイマーを停止
+        stopVoiceTimer();
+
         // タイマーの色を更新
         updateTimerColor();
     }
@@ -313,30 +924,83 @@ function endTimer() {
 
     // 記録がある場合は確認ダイアログを表示
     if (recordStartTime !== null && elapsedTime > 0) {
-        const durationMinutes = Math.floor(elapsedTime / 60000);
-        const descriptionText = currentDescription ? `\n作業内容: ${currentDescription}` : '';
-        const confirmMessage = `作業記録を保存しますか？\n（${formatDuration(durationMinutes)}の作業）${descriptionText}`;
-
-        if (confirm(confirmMessage)) {
-            // はいを選択：記録を保存してからリセット
-            saveRecord();
-        }
-        // いいえを選択：保存せずにリセット
+        showEndTimerDialog();
+        return; // ダイアログで処理するのでここで終了
     }
 
+    // 記録がない場合はそのままリセット
+    resetTimer();
+}
+
+// 終了確認ダイアログを表示
+function showEndTimerDialog() {
+    const durationMinutes = Math.floor(elapsedTime / 60000);
+    const descriptionText = currentDescription ? `作業内容: ${currentDescription}` : '';
+    const message = `作業記録を終了しますか？\n\n（${formatDuration(durationMinutes)}の作業）${descriptionText ? '\n' + descriptionText : ''}`;
+
+    const dialog = document.getElementById('endTimerDialog');
+    const messageElement = document.getElementById('endTimerDialogMessage');
+    const saveBtn = document.getElementById('endTimerSaveBtn');
+    const noSaveBtn = document.getElementById('endTimerNoSaveBtn');
+    const cancelBtn = document.getElementById('endTimerCancelBtn');
+
+    messageElement.textContent = message;
+    dialog.style.display = 'flex';
+
+    // 既存のイベントリスナーを削除（重複防止）
+    const newSaveBtn = saveBtn.cloneNode(true);
+    const newNoSaveBtn = noSaveBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+    noSaveBtn.parentNode.replaceChild(newNoSaveBtn, noSaveBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+    // 保存して終了
+    newSaveBtn.addEventListener('click', () => {
+        dialog.style.display = 'none';
+        saveRecordWithoutEndVoice(); // エンドボイスは別途再生
+        playEndVoice(); // エンドボイスを再生
+        resetTimer();
+    });
+
+    // 保存せずに終了
+    newNoSaveBtn.addEventListener('click', () => {
+        dialog.style.display = 'none';
+        playEndVoice(); // エンドボイスを再生
+        resetTimer();
+    });
+
+    // キャンセル（タイマーを再開）
+    newCancelBtn.addEventListener('click', () => {
+        dialog.style.display = 'none';
+        // タイマーが一時停止中の場合、再開する
+        if (!isRunning && elapsedTime > 0) {
+            startTimer();
+        }
+    });
+}
+
+// タイマーをリセット
+function resetTimer() {
     // タイマーをリセット
     isRunning = false;
     startTime = null;
     elapsedTime = 0;
     recordStartTime = null;
-    currentDescription = '';
+    // currentDescription はリセットしない（次の作業でも使えるように保持）
     clearInterval(timerInterval);
     timerDisplay.textContent = formatTime(0);
     startBtn.disabled = false;
     pauseBtn.disabled = true;
 
-    // 入力欄を有効化してリセット
+    // 入力欄を有効化（値は保持）
     updateDescriptionInput();
+
+    // BGMを停止
+    stopBGM();
+
+    // ボイス再生タイマーを停止
+    stopVoiceTimer();
 
     // タイマーの色を更新
     updateTimerColor();
@@ -380,7 +1044,7 @@ function displayRecords(targetDate = null) {
     recordsContainer.innerHTML = filteredRecords.map(record => {
         const dateObj = new Date(record.date);
         const displayDate = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
-        const description = record.description || '（作業内容なし）';
+        const description = record.description || '';
         const tagsText = record.tags.length > 0 ? ` [${record.tags.join(', ')}]` : '';
         // 表示時は時:分:秒形式で表示
         const displayStartTime = formatDateTimeForDisplayWithSeconds(record.startTime);
@@ -516,9 +1180,9 @@ function updateDescriptionInput() {
         // タイマーが停止中は有効化
         descriptionInput.disabled = false;
         descriptionInput.readOnly = false;
-        // リセット時にクリア
-        if (currentDescription === '') {
-            descriptionInput.value = '';
+        // currentDescriptionと入力欄の値を同期
+        if (currentDescription !== '' && descriptionInput.value !== currentDescription) {
+            descriptionInput.value = currentDescription;
         }
     }
 }
@@ -610,9 +1274,9 @@ function handleDeleteRecord(recordId) {
 
     const displayStartTime = formatDateTimeForDisplay(record.startTime);
     const displayEndTime = formatDateTimeForDisplay(record.endTime);
-    const description = record.description || '（作業内容なし）';
+    const description = record.description ? `\n${record.description}` : '';
 
-    if (confirm(`この記録を削除しますか？\n\n${record.date}\n${displayStartTime} - ${displayEndTime}\n${description}`)) {
+    if (confirm(`この記録を削除しますか？\n\n${record.date}\n${displayStartTime} - ${displayEndTime}${description}`)) {
         deleteRecord(recordId);
     }
 }
@@ -992,6 +1656,65 @@ startBtn.addEventListener('click', startTimer);
 pauseBtn.addEventListener('click', pauseTimer);
 endBtn.addEventListener('click', endTimer);
 
+// BGM音量調整のイベントリスナー
+if (bgmVolumeSlider) {
+    bgmVolumeSlider.addEventListener('input', (e) => {
+        const volume = parseInt(e.target.value, 10);
+        if (bgmMuted && volume > 0) {
+            // 音量を変更したらミュート解除
+            bgmMuted = false;
+            localStorage.setItem(STORAGE_KEY_BGM_MUTED, 'false');
+            updateBGMMuteButton();
+        }
+        setBGMVolume(volume);
+    });
+}
+
+// BGMミュートボタンのイベントリスナー
+if (bgmMuteBtn) {
+    bgmMuteBtn.addEventListener('click', toggleBGMMute);
+}
+
+// ボイス音量調整のイベントリスナー
+if (voiceVolumeSlider) {
+    voiceVolumeSlider.addEventListener('input', (e) => {
+        const volume = parseInt(e.target.value, 10);
+        if (voiceMuted && volume > 0) {
+            // 音量を変更したらミュート解除
+            voiceMuted = false;
+            localStorage.setItem(STORAGE_KEY_VOICE_MUTED, 'false');
+            updateVoiceMuteButton();
+        }
+        setVoiceVolume(volume);
+    });
+}
+
+// ボイスミュートボタンのイベントリスナー
+if (voiceMuteBtn) {
+    voiceMuteBtn.addEventListener('click', toggleVoiceMute);
+}
+
+// ボイス間隔入力のイベントリスナー
+if (voiceIntervalInput) {
+    voiceIntervalInput.addEventListener('change', (e) => {
+        const seconds = parseInt(e.target.value, 10);
+        if (!isNaN(seconds) && seconds >= 1 && seconds <= 300) {
+            setVoiceInterval(seconds);
+        } else {
+            // 無効な値の場合は元の値に戻す
+            voiceIntervalInput.value = voiceIntervalSeconds;
+        }
+    });
+
+    // 入力中はリアルタイムで更新しない（changeイベントのみ）
+    voiceIntervalInput.addEventListener('input', (e) => {
+        const seconds = parseInt(e.target.value, 10);
+        if (isNaN(seconds) || seconds < 1 || seconds > 300) {
+            // 無効な値の場合は赤く表示するなどしてもいいが、今回は何もしない
+        }
+    });
+}
+
 // カレンダーのイベントリスナー
 if (prevMonthBtn) {
     prevMonthBtn.addEventListener('click', goToPrevMonth);
@@ -1020,6 +1743,12 @@ if (tagInput) {
 timerDisplay.textContent = formatTime(0);
 updateTimerColor();
 updateDescriptionInput();
+loadBGMVolume(); // BGM音量を読み込み
+loadVoiceVolume(); // ボイス音量を読み込み
+loadVoiceInterval(); // ボイス間隔を読み込み
+loadCheerVoiceFiles(); // ボイスファイルリストを読み込み
+loadStartVoiceFiles(); // スタートボイスファイルリストを読み込み
+loadEndVoiceFiles(); // エンドボイスファイルリストを読み込み
 renderCalendar();
 displayRecords();
 displayTags();

@@ -12,7 +12,31 @@
     <div class="container">
         <header>
             <h1>作業時間計測タイマー</h1>
+            <div class="volume-controls">
+                <div class="volume-control">
+                    <label for="bgmVolumeSlider" class="volume-label">BGM</label>
+                    <input type="range" id="bgmVolumeSlider" class="volume-slider" min="0" max="100" value="50"
+                        step="1">
+                    <span class="volume-value" id="bgmVolumeValue">50</span>
+                    <button class="mute-btn" id="bgmMuteBtn" title="ミュート">🔇</button>
+                </div>
+                <div class="volume-control">
+                    <label for="voiceVolumeSlider" class="volume-label">ボイス</label>
+                    <input type="range" id="voiceVolumeSlider" class="volume-slider" min="0" max="100" value="50"
+                        step="1">
+                    <span class="volume-value" id="voiceVolumeValue">50</span>
+                    <button class="mute-btn" id="voiceMuteBtn" title="ミュート">🔇</button>
+                </div>
+                <div class="volume-control">
+                    <label for="voiceIntervalInput" class="volume-label">ボイス間隔（秒）</label>
+                    <input type="number" id="voiceIntervalInput" class="voice-interval-input" min="1" max="300"
+                        value="15" step="1">
+                </div>
+            </div>
         </header>
+        <audio id="bgmAudio" loop>
+            <source src="chill_music_01.mp3" type="audio/mpeg">
+        </audio>
 
         <main class="main-layout">
             <div class="left-panel">
@@ -73,6 +97,18 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- 終了確認ダイアログ -->
+    <div id="endTimerDialog" class="modal-dialog" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-message" id="endTimerDialogMessage"></div>
+            <div class="modal-buttons">
+                <button id="endTimerSaveBtn" class="modal-btn modal-btn-primary">保存して終了</button>
+                <button id="endTimerNoSaveBtn" class="modal-btn modal-btn-secondary">保存せずに終了</button>
+                <button id="endTimerCancelBtn" class="modal-btn modal-btn-cancel">キャンセル</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
