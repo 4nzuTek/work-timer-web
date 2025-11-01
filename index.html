@@ -42,6 +42,11 @@
             <div class="left-panel">
                 <div class="timer-section">
                     <div class="timer-display" id="timerDisplay">00:00</div>
+                    <div class="timer-controls">
+                        <button id="startBtn" class="btn btn-start">開始</button>
+                        <button id="pauseBtn" class="btn btn-pause" disabled>一時停止</button>
+                        <button id="endBtn" class="btn btn-end">終了</button>
+                    </div>
                     <div class="description-input-section">
                         <label for="descriptionInput" class="description-input-label">作業内容（任意）:</label>
                         <input type="text" id="descriptionInput" class="description-input" placeholder="作業内容を入力してください">
@@ -51,11 +56,6 @@
                         <div id="tagCheckboxes" class="tag-checkboxes">
                             <!-- タグチェックボックスがここに表示されます -->
                         </div>
-                    </div>
-                    <div class="timer-controls">
-                        <button id="startBtn" class="btn btn-start">開始</button>
-                        <button id="pauseBtn" class="btn btn-pause" disabled>一時停止</button>
-                        <button id="endBtn" class="btn btn-end">終了</button>
                     </div>
                 </div>
 
@@ -86,13 +86,24 @@
                         <!-- カレンダーがここに表示されます -->
                     </div>
                 </div>
-            </div>
-
-            <div class="right-panel">
                 <div class="records-section">
                     <h2 id="recordsSectionTitle">記録一覧</h2>
                     <div id="recordsList" class="records-list">
                         <!-- 記録がここに表示されます -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="statistics-section">
+                    <h2>統計</h2>
+                    <div class="statistics-period-selector">
+                        <button class="period-btn active" data-period="all">全期間</button>
+                        <button class="period-btn" data-period="month">月</button>
+                        <button class="period-btn" data-period="week">週</button>
+                    </div>
+                    <div id="statisticsContent" class="statistics-content">
+                        <!-- 統計情報がここに表示されます -->
                     </div>
                 </div>
             </div>

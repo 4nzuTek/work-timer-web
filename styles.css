@@ -190,6 +190,7 @@ header h1 {
 .center-panel {
     display: flex;
     flex-direction: column;
+    gap: 20px;
 }
 
 .right-panel {
@@ -628,6 +629,22 @@ header h1 {
     background: #1e1e2e;
 }
 
+.calendar-day-saturday {
+    color: #5b9bd5;
+}
+
+.calendar-day-sunday {
+    color: #ff6b6b;
+}
+
+.calendar-day-today.calendar-day-saturday {
+    color: #b8d4f0;
+}
+
+.calendar-day-today.calendar-day-sunday {
+    color: #ffb3b3;
+}
+
 .records-section {
     border-top: 2px solid #3a3a4e;
     padding-top: 20px;
@@ -635,6 +652,126 @@ header h1 {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    max-height: 500px;
+    /* カレンダーの下に配置するため、高さを制限 */
+}
+
+.statistics-section {
+    border-top: 2px solid #3a3a4e;
+    padding-top: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.statistics-section h2 {
+    color: #e0e0e0;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.statistics-period-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.period-btn {
+    flex: 1;
+    padding: 8px 16px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.period-btn:hover {
+    background-color: #444;
+    border-color: #666;
+}
+
+.period-btn.active {
+    background-color: #4a9eff;
+    border-color: #4a9eff;
+    color: white;
+}
+
+.period-btn.active:hover {
+    background-color: #3a8eef;
+    border-color: #3a8eef;
+}
+
+.statistics-content {
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+.statistics-empty {
+    text-align: center;
+    color: #888;
+    padding: 40px 20px;
+    font-size: 14px;
+}
+
+.statistics-total {
+    background: #2a2a3e;
+    border: 1px solid #3a3a4e;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.statistics-label {
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 8px;
+}
+
+.statistics-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #7c8aff;
+}
+
+.statistics-tags-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 12px;
+}
+
+.statistics-tags {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.statistics-tag-item {
+    background: #2a2a3e;
+    border: 1px solid #3a3a4e;
+    border-radius: 6px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.statistics-tag-name {
+    font-size: 14px;
+    color: #e0e0e0;
+    font-weight: 500;
+}
+
+.statistics-tag-value {
+    font-size: 14px;
+    color: #7c8aff;
+    font-weight: 600;
 }
 
 .records-section h2 {
@@ -651,8 +788,9 @@ header h1 {
     flex: 1;
     overflow-y: scroll;
     /* 常にスクロールバーを表示してレイアウトシフトを防ぐ */
-    min-height: 400px;
-    /* 最低限の高さを確保 */
+    min-height: 300px;
+    /* カレンダーの下に配置するため、高さを調整 */
+    max-height: 400px;
 }
 
 .no-records {

@@ -18,6 +18,9 @@ let voiceVolumeBeforeMute = 50; // ミュート前のボイス音量
 let currentCalendarDate = new Date(); // カレンダーで表示している年月
 let selectedDate = null; // 選択中の日付（YYYY-MM-DD形式）
 
+// 統計の状態管理
+let statisticsPeriod = 'all'; // 'all', 'month', 'week'
+
 // ローカルストレージのキー
 const STORAGE_KEY_RECORDS = 'workingTimer_records';
 const STORAGE_KEY_TAGS = 'workingTimer_tags';
@@ -337,6 +340,21 @@ function formatDuration(minutes) {
     return `${mins}分`;
 }
 
+// 秒を含む時間を時間:分:秒形式で取得
+function formatDurationWithSeconds(totalSeconds) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+        return `${hours}時間${minutes}分${seconds}秒`;
+    } else if (minutes > 0) {
+        return `${minutes}分${seconds}秒`;
+    } else {
+        return `${seconds}秒`;
+    }
+}
+
 // 記録を作成して保存（エンドボイス再生なし）
 function saveRecordWithoutEndVoice() {
     if (recordStartTime === null || elapsedTime === 0) {
@@ -388,6 +406,9 @@ function saveRecordWithoutEndVoice() {
 
     // カレンダーを更新（記録がある日のマーカーを更新するため）
     renderCalendar();
+
+    // 統計を更新
+    updateStatistics();
 
     // タグと作業内容はリセットしない（次の作業でも使えるように保持）
 }
@@ -1014,26 +1035,18 @@ function displayRecords(targetDate = null) {
     const records = loadRecords();
     let filteredRecords = records;
 
-    // 特定の日付が指定されている場合はその日の記録のみを表示
-    if (targetDate) {
-        filteredRecords = records.filter(record => record.date === targetDate);
-        const dateObj = new Date(targetDate);
-        const displayDate = `${dateObj.getFullYear()}年${dateObj.getMonth() + 1}月${dateObj.getDate()}日`;
-        if (recordsSectionTitle) {
-            recordsSectionTitle.textContent = `${displayDate}の記録`;
-        }
-    } else {
-        // 日付順にソート（新しい順）
-        filteredRecords.sort((a, b) => {
-            const dateCompare = b.date.localeCompare(a.date);
-            if (dateCompare !== 0) return dateCompare;
-            return b.startTime.localeCompare(a.startTime);
-        });
-        // 最新10件のみ表示
-        filteredRecords = filteredRecords.slice(0, 10);
-        if (recordsSectionTitle) {
-            recordsSectionTitle.textContent = '記録一覧';
-        }
+    // targetDateが指定されていない場合は今日の日付を使用
+    if (!targetDate) {
+        const today = new Date();
+        targetDate = formatDate(today);
+    }
+
+    // 特定の日付の記録のみを表示
+    filteredRecords = records.filter(record => record.date === targetDate);
+    const dateObj = new Date(targetDate);
+    const displayDate = `${dateObj.getFullYear()}年${dateObj.getMonth() + 1}月${dateObj.getDate()}日`;
+    if (recordsSectionTitle) {
+        recordsSectionTitle.textContent = `${displayDate}の記録`;
     }
 
     if (filteredRecords.length === 0) {
@@ -1102,7 +1115,12 @@ function renderCalendar() {
         const prevMonthLastDay = new Date(year, month, 0).getDate();
         for (let i = firstDayOfWeek - 1; i >= 0; i--) {
             const day = prevMonthLastDay - i;
-            calendarHTML += `<div class="calendar-day calendar-day-other">${day}</div>`;
+            const date = new Date(year, month - 1, day);
+            const dayOfWeek = date.getDay(); // 0=日曜日, 6=土曜日
+            let classes = 'calendar-day calendar-day-other';
+            if (dayOfWeek === 0) classes += ' calendar-day-sunday'; // 日曜日
+            if (dayOfWeek === 6) classes += ' calendar-day-saturday'; // 土曜日
+            calendarHTML += `<div class="${classes}">${day}</div>`;
         }
     }
 
@@ -1110,7 +1128,9 @@ function renderCalendar() {
     const today = new Date();
     const todayStr = formatDate(today);
     for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = formatDate(new Date(year, month, day));
+        const date = new Date(year, month, day);
+        const dayOfWeek = date.getDay(); // 0=日曜日, 6=土曜日
+        const dateStr = formatDate(date);
         const isToday = dateStr === todayStr;
         const hasRecords = datesWithRecords.has(dateStr);
         const isSelected = selectedDate === dateStr;
@@ -1119,6 +1139,8 @@ function renderCalendar() {
         if (isToday) classes += ' calendar-day-today';
         if (hasRecords) classes += ' calendar-day-has-records';
         if (isSelected) classes += ' calendar-day-selected';
+        if (dayOfWeek === 0) classes += ' calendar-day-sunday'; // 日曜日
+        if (dayOfWeek === 6) classes += ' calendar-day-saturday'; // 土曜日
 
         calendarHTML += `<div class="${classes}" data-date="${dateStr}">${day}</div>`;
     }
@@ -1128,7 +1150,12 @@ function renderCalendar() {
     const remainingCells = 42 - totalCells; // 6週分（42日）を表示
     if (remainingCells > 0) {
         for (let day = 1; day <= remainingCells && day <= 7; day++) {
-            calendarHTML += `<div class="calendar-day calendar-day-other">${day}</div>`;
+            const date = new Date(year, month + 1, day);
+            const dayOfWeek = date.getDay(); // 0=日曜日, 6=土曜日
+            let classes = 'calendar-day calendar-day-other';
+            if (dayOfWeek === 0) classes += ' calendar-day-sunday'; // 日曜日
+            if (dayOfWeek === 6) classes += ' calendar-day-saturday'; // 土曜日
+            calendarHTML += `<div class="${classes}">${day}</div>`;
         }
     }
 
@@ -1264,6 +1291,7 @@ function deleteRecord(recordId) {
         displayRecords();
     }
     renderCalendar();
+    updateStatistics(); // 統計を更新
 }
 
 // 記録削除処理
@@ -1478,6 +1506,7 @@ function cancelEditRecord(recordId) {
     } else {
         displayRecords();
     }
+    updateStatistics(); // 統計を更新
 }
 
 // 編集した記録を保存
@@ -1622,6 +1651,7 @@ function saveEditedRecord(recordId) {
         displayRecords();
     }
     renderCalendar();
+    updateStatistics(); // 統計を更新
 }
 
 // グローバルスコープに公開（onchange/onclickから呼び出すため）
@@ -1753,4 +1783,153 @@ renderCalendar();
 displayRecords();
 displayTags();
 updateTagCheckboxes();
+updateStatistics(); // 統計を表示
+
+// 統計期間切り替えボタンのイベントリスナー
+document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        // アクティブ状態を更新
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+
+        statisticsPeriod = e.target.dataset.period;
+        updateStatistics();
+    });
+});
+
+// 統計を更新
+function updateStatistics() {
+    const statisticsContent = document.getElementById('statisticsContent');
+    if (!statisticsContent) return;
+
+    const records = loadRecords();
+    if (records.length === 0) {
+        statisticsContent.innerHTML = '<div class="statistics-empty">記録がありません</div>';
+        return;
+    }
+
+    // 期間に応じてフィルタリング
+    const filteredRecords = filterRecordsByPeriod(records, statisticsPeriod);
+
+    if (filteredRecords.length === 0) {
+        statisticsContent.innerHTML = '<div class="statistics-empty">選択した期間に記録がありません</div>';
+        return;
+    }
+
+    // 総作業時間を計算（秒まで）
+    const totalSeconds = calculateTotalDuration(filteredRecords);
+
+    // タグごとの作業時間を計算
+    const tagStatistics = calculateTagStatistics(filteredRecords);
+
+    // HTMLを生成
+    let html = `<div class="statistics-total">
+        <div class="statistics-label">総作業時間</div>
+        <div class="statistics-value">${formatDurationWithSeconds(totalSeconds)}</div>
+    </div>`;
+
+    if (tagStatistics.length > 0) {
+        html += '<div class="statistics-tags-title">タグ別作業時間</div>';
+        html += '<div class="statistics-tags">';
+
+        // 作業時間が多い順にソート
+        tagStatistics.sort((a, b) => b.totalSeconds - a.totalSeconds);
+
+        tagStatistics.forEach(tag => {
+            html += `
+                <div class="statistics-tag-item">
+                    <div class="statistics-tag-name">${tag.tag}</div>
+                    <div class="statistics-tag-value">${formatDurationWithSeconds(tag.totalSeconds)}</div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+    }
+
+    statisticsContent.innerHTML = html;
+}
+
+// 期間に応じて記録をフィルタリング
+function filterRecordsByPeriod(records, period) {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    switch (period) {
+        case 'week': {
+            // 今週の月曜日を計算
+            const monday = new Date(now);
+            const dayOfWeek = now.getDay();
+            const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 日曜日は6、月曜日は0
+            monday.setDate(now.getDate() - diff);
+            monday.setHours(0, 0, 0, 0);
+
+            return records.filter(record => {
+                const recordDate = new Date(record.date);
+                recordDate.setHours(0, 0, 0, 0);
+                return recordDate >= monday;
+            });
+        }
+        case 'month': {
+            // 今月の1日
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            return records.filter(record => {
+                const recordDate = new Date(record.date);
+                recordDate.setHours(0, 0, 0, 0);
+                return recordDate >= firstDayOfMonth;
+            });
+        }
+        case 'all':
+        default:
+            return records;
+    }
+}
+
+// 記録の総作業時間を計算（秒まで）
+function calculateTotalDuration(records) {
+    let totalSeconds = 0;
+
+    records.forEach(record => {
+        // durationMinutes と durationSeconds から計算
+        const minutes = record.duration || 0;
+        const seconds = record.durationSeconds || 0;
+        totalSeconds += minutes * 60 + seconds;
+    });
+
+    return totalSeconds;
+}
+
+// タグごとの作業時間を計算
+function calculateTagStatistics(records) {
+    const tagMap = new Map();
+
+    records.forEach(record => {
+        const minutes = record.duration || 0;
+        const seconds = record.durationSeconds || 0;
+        const totalSecondsForRecord = minutes * 60 + seconds;
+
+        // タグがない場合はスキップ
+        if (!record.tags || record.tags.length === 0) {
+            return;
+        }
+
+        // 各タグに作業時間を配分（複数タグの場合は均等に分割）
+        const secondsPerTag = totalSecondsForRecord / record.tags.length;
+
+        record.tags.forEach(tag => {
+            if (tagMap.has(tag)) {
+                tagMap.set(tag, tagMap.get(tag) + secondsPerTag);
+            } else {
+                tagMap.set(tag, secondsPerTag);
+            }
+        });
+    });
+
+    // Mapを配列に変換
+    return Array.from(tagMap.entries()).map(([tag, totalSeconds]) => ({
+        tag,
+        totalSeconds: Math.round(totalSeconds) // 秒を整数に丸める
+    }));
+}
 
