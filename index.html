@@ -14,41 +14,62 @@
             <h1>作業時間計測タイマー</h1>
         </header>
 
-        <main>
-            <div class="timer-section">
-                <div class="timer-display" id="timerDisplay">00:00</div>
-                <div class="tag-selection-section">
-                    <label class="tag-selection-label">タグ選択:</label>
-                    <div id="tagCheckboxes" class="tag-checkboxes">
-                        <!-- タグチェックボックスがここに表示されます -->
+        <main class="main-layout">
+            <div class="left-panel">
+                <div class="timer-section">
+                    <div class="timer-display" id="timerDisplay">00:00</div>
+                    <div class="description-input-section">
+                        <label for="descriptionInput" class="description-input-label">作業内容（任意）:</label>
+                        <input type="text" id="descriptionInput" class="description-input" placeholder="作業内容を入力してください">
+                    </div>
+                    <div class="tag-selection-section">
+                        <label class="tag-selection-label">タグ選択:</label>
+                        <div id="tagCheckboxes" class="tag-checkboxes">
+                            <!-- タグチェックボックスがここに表示されます -->
+                        </div>
+                    </div>
+                    <div class="timer-controls">
+                        <button id="startBtn" class="btn btn-start">開始</button>
+                        <button id="pauseBtn" class="btn btn-pause" disabled>一時停止</button>
+                        <button id="endBtn" class="btn btn-end">終了</button>
                     </div>
                 </div>
-                <div class="timer-controls">
-                    <button id="startBtn" class="btn btn-start">開始</button>
-                    <button id="pauseBtn" class="btn btn-pause" disabled>一時停止</button>
-                    <button id="endBtn" class="btn btn-end">終了</button>
+
+                <details class="tag-management-section">
+                    <summary>
+                        <h2>タグ管理</h2>
+                    </summary>
+                    <div class="tag-management-content">
+                        <div class="tag-input-group">
+                            <input type="text" id="tagInput" class="tag-input" placeholder="新しいタグを入力">
+                            <button id="addTagBtn" class="btn btn-small">追加</button>
+                        </div>
+                        <div id="tagList" class="tag-list">
+                            <!-- タグ一覧がここに表示されます -->
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <div class="center-panel">
+                <div class="calendar-section">
+                    <div class="calendar-header">
+                        <button id="prevMonthBtn" class="btn-calendar-nav">‹</button>
+                        <h2 id="calendarMonthYear"></h2>
+                        <button id="nextMonthBtn" class="btn-calendar-nav">›</button>
+                    </div>
+                    <div id="calendarContainer" class="calendar-container">
+                        <!-- カレンダーがここに表示されます -->
+                    </div>
                 </div>
             </div>
 
-            <details class="tag-management-section">
-                <summary>
-                    <h2>タグ管理</h2>
-                </summary>
-                <div class="tag-management-content">
-                    <div class="tag-input-group">
-                        <input type="text" id="tagInput" class="tag-input" placeholder="新しいタグを入力">
-                        <button id="addTagBtn" class="btn btn-small">追加</button>
+            <div class="right-panel">
+                <div class="records-section">
+                    <h2 id="recordsSectionTitle">記録一覧</h2>
+                    <div id="recordsList" class="records-list">
+                        <!-- 記録がここに表示されます -->
                     </div>
-                    <div id="tagList" class="tag-list">
-                        <!-- タグ一覧がここに表示されます -->
-                    </div>
-                </div>
-            </details>
-
-            <div class="records-section">
-                <h2>記録一覧</h2>
-                <div id="recordsList" class="records-list">
-                    <!-- 記録がここに表示されます -->
                 </div>
             </div>
         </main>

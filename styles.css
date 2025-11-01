@@ -12,10 +12,9 @@ body {
     -moz-osx-font-smoothing: grayscale;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     padding: 20px;
+    overflow-y: scroll;
+    /* 常にスクロールバーを表示してレイアウトシフトを防ぐ */
 }
 
 .container {
@@ -23,13 +22,43 @@ body {
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     width: 100%;
-    max-width: 600px;
+    max-width: 1800px;
+    margin: 0 auto;
     padding: 40px;
 }
 
 header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
+}
+
+.main-layout {
+    display: grid;
+    grid-template-columns: 450px 380px 1fr;
+    gap: 30px;
+    align-items: start;
+    min-height: calc(100vh - 140px);
+    /* 高さを確保してスクロール前提に */
+}
+
+.left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    min-height: 600px;
+    /* 最低限の高さを確保 */
+}
+
+.center-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 600px;
+    /* 最低限の高さを確保 */
 }
 
 header h1 {
@@ -42,7 +71,7 @@ header h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 30px;
+    gap: 25px;
 }
 
 .timer-display {
@@ -120,6 +149,41 @@ header h1 {
     background: linear-gradient(135deg, #3f9cee 0%, #00e2ee 100%);
 }
 
+.description-input-section {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.description-input-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.description-input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    font-family: inherit;
+}
+
+.description-input:focus {
+    border-color: #667eea;
+}
+
+.description-input:disabled,
+.description-input[readonly] {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
 .tag-selection-section {
     width: 100%;
     margin-bottom: 20px;
@@ -169,9 +233,8 @@ header h1 {
 }
 
 .tag-management-section {
-    margin-top: 50px;
     border-top: 2px solid #e0e0e0;
-    padding-top: 30px;
+    padding-top: 20px;
 }
 
 .tag-management-section summary {
@@ -285,10 +348,150 @@ header h1 {
     background: #e5475c;
 }
 
-.records-section {
-    margin-top: 50px;
+.calendar-section {
     border-top: 2px solid #e0e0e0;
-    padding-top: 30px;
+    padding-top: 20px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.calendar-header h2 {
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.btn-calendar-nav {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+}
+
+.btn-calendar-nav:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #653a92 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.calendar-container {
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-bottom: 6px;
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-weight: 600;
+    font-size: 11px;
+    color: #666;
+    padding: 4px 2px;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    font-weight: 500;
+    min-height: 36px;
+}
+
+.calendar-day:hover:not(.calendar-day-other) {
+    background: #f0f0f0;
+    transform: scale(1.05);
+}
+
+.calendar-day-today {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 700;
+}
+
+.calendar-day-has-records {
+    position: relative;
+}
+
+.calendar-day-has-records::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: #667eea;
+    border-radius: 50%;
+}
+
+.calendar-day-today.calendar-day-has-records::after {
+    background: white;
+}
+
+.calendar-day-selected {
+    border: 2px solid #667eea;
+    background: #e8e8ff;
+    font-weight: 700;
+}
+
+.calendar-day-selected.calendar-day-today {
+    background: linear-gradient(135deg, #5568d3 0%, #653a92 100%);
+    border-color: #667eea;
+}
+
+.calendar-day-other {
+    color: #bbb;
+    cursor: default;
+}
+
+.calendar-day-other:hover {
+    transform: none;
+    background: white;
+}
+
+.records-section {
+    border-top: 2px solid #e0e0e0;
+    padding-top: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .records-section h2 {
@@ -302,8 +505,11 @@ header h1 {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: 400px;
-    overflow-y: auto;
+    flex: 1;
+    overflow-y: scroll;
+    /* 常にスクロールバーを表示してレイアウトシフトを防ぐ */
+    min-height: 400px;
+    /* 最低限の高さを確保 */
 }
 
 .no-records {
@@ -343,6 +549,19 @@ header h1 {
 }
 
 /* レスポンシブ対応 */
+@media (max-width: 1400px) {
+    .main-layout {
+        grid-template-columns: 400px 340px 1fr;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 600px) {
     .container {
         padding: 30px 20px;
@@ -375,6 +594,10 @@ header h1 {
         max-height: 300px;
     }
 
+    .description-input-section {
+        margin-bottom: 15px;
+    }
+
     .tag-selection-section {
         margin-bottom: 15px;
     }
@@ -389,5 +612,38 @@ header h1 {
 
     .btn-small {
         width: 100%;
+    }
+
+    .calendar-header {
+        margin-bottom: 15px;
+    }
+
+    .calendar-header h2 {
+        font-size: 18px;
+    }
+
+    .btn-calendar-nav {
+        width: 35px;
+        height: 35px;
+        font-size: 20px;
+    }
+
+    .calendar-container {
+        padding: 10px;
+    }
+
+    .calendar-weekday {
+        font-size: 12px;
+        padding: 6px;
+    }
+
+    .calendar-day {
+        font-size: 12px;
+    }
+
+    .calendar-day-has-records::after {
+        width: 4px;
+        height: 4px;
+        bottom: 2px;
     }
 }
