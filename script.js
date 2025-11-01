@@ -1259,14 +1259,33 @@ function displayTags() {
         return;
     }
 
-    tagListContainer.innerHTML = tags.map(tag => {
+    // 一度にHTMLを生成してから、イベントリスナーを追加
+    tagListContainer.innerHTML = tags.map((tag, index) => {
         return `
-            <div class="tag-item">
+            <div class="tag-item" data-tag-index="${index}" data-tag-name="${tag.replace(/"/g, '&quot;')}">
                 <span class="tag-name">${tag}</span>
-                <button class="btn-delete-tag" onclick="handleDeleteTag('${tag}')">削除</button>
+                <div class="tag-item-buttons">
+                    <button class="btn-edit-tag" data-tag-name="${tag.replace(/"/g, '&quot;')}">編集</button>
+                    <button class="btn-delete-tag" data-tag-name="${tag.replace(/"/g, '&quot;')}">削除</button>
+                </div>
             </div>
         `;
     }).join('');
+
+    // イベントリスナーを追加
+    tagListContainer.querySelectorAll('.btn-edit-tag').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const tagName = btn.getAttribute('data-tag-name');
+            startEditTag(tagName);
+        });
+    });
+
+    tagListContainer.querySelectorAll('.btn-delete-tag').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const tagName = btn.getAttribute('data-tag-name');
+            handleDeleteTag(tagName);
+        });
+    });
 }
 
 // タグ削除処理
@@ -1275,6 +1294,182 @@ function handleDeleteTag(tagName) {
         deleteTag(tagName);
         displayTags();
         updateTagCheckboxes();
+    }
+}
+
+// タグの編集を開始
+function startEditTag(tagName) {
+    const tagItem = document.querySelector(`[data-tag-name="${tagName.replace(/"/g, '&quot;')}"]`);
+    if (!tagItem) return;
+
+    // data-tag-name属性を保持したまま編集モードに
+    tagItem.setAttribute('data-tag-name', tagName.replace(/"/g, '&quot;'));
+    tagItem.innerHTML = `
+        <input type="text" class="tag-edit-input" value="${tagName.replace(/"/g, '&quot;')}" data-old-tag-name="${tagName.replace(/"/g, '&quot;')}">
+        <div class="tag-item-buttons">
+            <button class="btn-save-tag" data-old-tag-name="${tagName.replace(/"/g, '&quot;')}">保存</button>
+            <button class="btn-cancel-edit-tag" data-old-tag-name="${tagName.replace(/"/g, '&quot;')}">キャンセル</button>
+        </div>
+    `;
+
+    // イベントリスナーを追加
+    const saveBtn = tagItem.querySelector('.btn-save-tag');
+    const cancelBtn = tagItem.querySelector('.btn-cancel-edit-tag');
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            saveEditedTag(tagName);
+        });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            cancelEditTag(tagName);
+        });
+    }
+
+    // 入力フィールドにフォーカス
+    const input = tagItem.querySelector('.tag-edit-input');
+    if (input) {
+        input.focus();
+        input.select();
+
+        // Enterキーで保存
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveEditedTag(tagName);
+            }
+        });
+
+        // Escapeキーでキャンセル
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                cancelEditTag(tagName);
+            }
+        });
+    }
+}
+
+// タグの編集をキャンセル
+function cancelEditTag(tagName) {
+    displayTags();
+}
+
+// タグ名を更新（記録内のタグも更新）
+function updateTagName(oldTagName, newTagName) {
+    // 新しいタグ名の検証
+    const trimmedNewTag = newTagName.trim();
+    if (!trimmedNewTag) {
+        alert('タグ名を入力してください');
+        return false;
+    }
+
+    if (trimmedNewTag === oldTagName) {
+        // 変更がない場合は何もしない
+        return true;
+    }
+
+    const tags = loadTags();
+
+    // 新しいタグ名が既に存在するかチェック
+    if (tags.includes(trimmedNewTag)) {
+        alert('このタグ名は既に登録されています');
+        return false;
+    }
+
+    // タグリストを更新
+    const tagIndex = tags.indexOf(oldTagName);
+    if (tagIndex === -1) {
+        return false;
+    }
+    tags[tagIndex] = trimmedNewTag;
+    saveTags(tags);
+
+    // すべての記録内のタグを更新
+    updateTagInRecords(oldTagName, trimmedNewTag);
+
+    // 選択中のタグも更新
+    const selectedIndex = selectedTags.indexOf(oldTagName);
+    if (selectedIndex > -1) {
+        selectedTags[selectedIndex] = trimmedNewTag;
+    }
+
+    return true;
+}
+
+// すべての記録内のタグを更新
+function updateTagInRecords(oldTagName, newTagName) {
+    const records = loadRecords();
+    let updated = false;
+
+    records.forEach(record => {
+        if (record.tags && Array.isArray(record.tags)) {
+            const tagIndex = record.tags.indexOf(oldTagName);
+            if (tagIndex > -1) {
+                record.tags[tagIndex] = newTagName;
+                updated = true;
+            }
+        }
+    });
+
+    if (updated) {
+        localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
+
+        // 記録一覧を更新
+        if (selectedDate) {
+            displayRecords(selectedDate);
+        } else {
+            displayRecords();
+        }
+
+        // 統計を更新
+        updateStatistics();
+    }
+}
+
+// 編集したタグを保存
+function saveEditedTag(oldTagName) {
+    // 編集モードの要素を検索（data-tag-name属性またはdata-old-tag-name属性から）
+    const tagItems = document.querySelectorAll('[data-tag-name]');
+    let tagItem = null;
+    const escapedOldTagName = oldTagName.replace(/"/g, '&quot;');
+
+    for (let item of tagItems) {
+        const input = item.querySelector('.tag-edit-input');
+        if (input) {
+            const inputOldTagName = input.getAttribute('data-old-tag-name');
+            if (inputOldTagName === escapedOldTagName ||
+                inputOldTagName === oldTagName ||
+                item.getAttribute('data-tag-name') === escapedOldTagName ||
+                item.getAttribute('data-tag-name') === oldTagName) {
+                tagItem = item;
+                break;
+            }
+        }
+    }
+
+    if (!tagItem) {
+        console.error('タグ要素が見つかりません');
+        return;
+    }
+
+    const input = tagItem.querySelector('.tag-edit-input');
+    if (!input) {
+        console.error('入力フィールドが見つかりません');
+        return;
+    }
+
+    const newTagName = input.value.trim();
+
+    if (updateTagName(oldTagName, newTagName)) {
+        // 更新成功
+        displayTags();
+        updateTagCheckboxes();
+    } else {
+        // 更新失敗（エラーメッセージは updateTagName 内で表示済み）
+        // 入力フィールドにフォーカスを戻す
+        input.focus();
+        input.select();
     }
 }
 
@@ -1661,6 +1856,9 @@ window.handleDeleteRecord = handleDeleteRecord;
 window.startEditRecord = startEditRecord;
 window.cancelEditRecord = cancelEditRecord;
 window.saveEditedRecord = saveEditedRecord;
+window.startEditTag = startEditTag;
+window.cancelEditTag = cancelEditTag;
+window.saveEditedTag = saveEditedTag;
 
 // タグ追加処理
 function handleAddTag() {
@@ -1835,10 +2033,19 @@ function updateStatistics() {
         // 作業時間が多い順にソート
         tagStatistics.sort((a, b) => b.totalSeconds - a.totalSeconds);
 
+        // 最大値を取得（グラフの100%とする）
+        const maxSeconds = tagStatistics[0].totalSeconds;
+
         tagStatistics.forEach(tag => {
+            // 最大値に対する割合を計算（%）
+            const percentage = maxSeconds > 0 ? (tag.totalSeconds / maxSeconds) * 100 : 0;
+
             html += `
                 <div class="statistics-tag-item">
                     <div class="statistics-tag-name">${tag.tag}</div>
+                    <div class="statistics-tag-bar-container">
+                        <div class="statistics-tag-bar" style="width: ${percentage}%"></div>
+                    </div>
                     <div class="statistics-tag-value">${formatDurationWithSeconds(tag.totalSeconds)}</div>
                 </div>
             `;

@@ -475,6 +475,12 @@ header h1 {
     font-weight: 500;
 }
 
+.tag-item-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .btn-delete-tag {
     padding: 4px 12px;
     font-size: 12px;
@@ -488,6 +494,68 @@ header h1 {
 
 .btn-delete-tag:hover {
     background: #e5475c;
+}
+
+.btn-edit-tag {
+    padding: 4px 12px;
+    font-size: 12px;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-edit-tag:hover {
+    background: #3a80d2;
+}
+
+.tag-edit-input {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 14px;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    border: 1px solid #4a90e2;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
+.tag-edit-input:focus {
+    outline: none;
+    border-color: #5aa0f2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.btn-save-tag {
+    padding: 4px 12px;
+    font-size: 12px;
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-save-tag:hover {
+    background: #3c9f40;
+}
+
+.btn-cancel-edit-tag {
+    padding: 4px 12px;
+    font-size: 12px;
+    background: #757575;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-cancel-edit-tag:hover {
+    background: #656565;
 }
 
 .calendar-section {
@@ -753,25 +821,48 @@ header h1 {
 }
 
 .statistics-tag-item {
-    background: #2a2a3e;
-    border: 1px solid #3a3a4e;
-    border-radius: 6px;
-    padding: 12px 16px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
 }
 
 .statistics-tag-name {
     font-size: 14px;
     color: #e0e0e0;
     font-weight: 500;
+    width: 120px;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.statistics-tag-bar-container {
+    flex: 1;
+    height: 24px;
+    background-color: #2a2a3e;
+    border: 1px solid #3a3a4e;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+}
+
+.statistics-tag-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #7c8aff 0%, #9c9aff 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    min-width: 2px;
 }
 
 .statistics-tag-value {
     font-size: 14px;
     color: #7c8aff;
     font-weight: 600;
+    min-width: 80px;
+    text-align: right;
 }
 
 .records-section h2 {
