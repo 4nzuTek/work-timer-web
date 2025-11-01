@@ -1,0 +1,393 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 600px;
+    padding: 40px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+header h1 {
+    color: #333;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.timer-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.timer-display {
+    font-size: 72px;
+    font-weight: 700;
+    color: #667eea;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 4px;
+    text-align: center;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s ease;
+}
+
+.timer-display.timer-stopped {
+    color: #999;
+}
+
+.timer-controls {
+    display: flex;
+    gap: 20px;
+}
+
+.btn {
+    padding: 16px 40px;
+    font-size: 18px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-start {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-start:hover:not(:disabled) {
+    background: linear-gradient(135deg, #5568d3 0%, #653a92 100%);
+}
+
+.btn-pause {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.btn-pause:hover:not(:disabled) {
+    background: linear-gradient(135deg, #e083eb 0%, #e5475c 100%);
+}
+
+.btn-end {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.btn-end:hover:not(:disabled) {
+    background: linear-gradient(135deg, #3f9cee 0%, #00e2ee 100%);
+}
+
+.tag-selection-section {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.tag-selection-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.tag-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    min-height: 40px;
+}
+
+.tag-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+    background: white;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.tag-checkbox-label:hover {
+    background: #f0f0f0;
+}
+
+.tag-checkbox {
+    margin-right: 6px;
+    cursor: pointer;
+}
+
+.no-tags {
+    color: #999;
+    font-size: 13px;
+}
+
+.tag-management-section {
+    margin-top: 50px;
+    border-top: 2px solid #e0e0e0;
+    padding-top: 30px;
+}
+
+.tag-management-section summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.tag-management-section summary::-webkit-details-marker {
+    display: none;
+}
+
+.tag-management-section summary::before {
+    content: '▶';
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform 0.3s ease;
+    color: #667eea;
+}
+
+.tag-management-section[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.tag-management-section h2 {
+    display: inline-block;
+    color: #333;
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.tag-management-content {
+    margin-top: 20px;
+}
+
+.tag-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tag-input {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.tag-input:focus {
+    border-color: #667eea;
+}
+
+.btn-small {
+    padding: 10px 20px;
+    font-size: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-small:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #653a92 100%);
+    transform: translateY(-1px);
+}
+
+.tag-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tag-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.tag-item:hover {
+    background: #eeeeee;
+}
+
+.tag-name {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
+
+.btn-delete-tag {
+    padding: 4px 12px;
+    font-size: 12px;
+    background: #f5576c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-delete-tag:hover {
+    background: #e5475c;
+}
+
+.records-section {
+    margin-top: 50px;
+    border-top: 2px solid #e0e0e0;
+    padding-top: 30px;
+}
+
+.records-section h2 {
+    color: #333;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.records-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.no-records {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+    font-size: 14px;
+}
+
+.record-item {
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 12px 16px;
+    transition: background 0.2s ease;
+}
+
+.record-item:hover {
+    background: #eeeeee;
+}
+
+.record-date {
+    font-weight: 600;
+    color: #667eea;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.record-time {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.record-description {
+    font-size: 14px;
+    color: #333;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 600px) {
+    .container {
+        padding: 30px 20px;
+    }
+
+    .timer-display {
+        font-size: 56px;
+        letter-spacing: 2px;
+    }
+
+    .btn {
+        padding: 14px 30px;
+        font-size: 16px;
+    }
+
+    header h1 {
+        font-size: 24px;
+    }
+
+    .records-section {
+        margin-top: 40px;
+        padding-top: 20px;
+    }
+
+    .records-section h2 {
+        font-size: 20px;
+    }
+
+    .records-list {
+        max-height: 300px;
+    }
+
+    .tag-selection-section {
+        margin-bottom: 15px;
+    }
+
+    .tag-checkboxes {
+        padding: 8px;
+    }
+
+    .tag-input-group {
+        flex-direction: column;
+    }
+
+    .btn-small {
+        width: 100%;
+    }
+}

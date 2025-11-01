@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作業時間計測タイマー</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>作業時間計測タイマー</h1>
+        </header>
+
+        <main>
+            <div class="timer-section">
+                <div class="timer-display" id="timerDisplay">00:00</div>
+                <div class="tag-selection-section">
+                    <label class="tag-selection-label">タグ選択:</label>
+                    <div id="tagCheckboxes" class="tag-checkboxes">
+                        <!-- タグチェックボックスがここに表示されます -->
+                    </div>
+                </div>
+                <div class="timer-controls">
+                    <button id="startBtn" class="btn btn-start">開始</button>
+                    <button id="pauseBtn" class="btn btn-pause" disabled>一時停止</button>
+                    <button id="endBtn" class="btn btn-end">終了</button>
+                </div>
+            </div>
+
+            <details class="tag-management-section">
+                <summary>
+                    <h2>タグ管理</h2>
+                </summary>
+                <div class="tag-management-content">
+                    <div class="tag-input-group">
+                        <input type="text" id="tagInput" class="tag-input" placeholder="新しいタグを入力">
+                        <button id="addTagBtn" class="btn btn-small">追加</button>
+                    </div>
+                    <div id="tagList" class="tag-list">
+                        <!-- タグ一覧がここに表示されます -->
+                    </div>
+                </div>
+            </details>
+
+            <div class="records-section">
+                <h2>記録一覧</h2>
+                <div id="recordsList" class="records-list">
+                    <!-- 記録がここに表示されます -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
