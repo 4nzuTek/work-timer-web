@@ -3530,8 +3530,26 @@ function initSkybox() {
         const widthChanged = Math.abs(width - lastWidth) > 1; // 1px以上の変化
 
         if (heightIncreased || widthChanged || (lastWidth === 0 && lastHeight === 0)) {
+            // 変更量を計算（更新前に計算する必要がある）
+            const heightDiff = height - lastHeight;
+            const widthDiff = Math.abs(width - lastWidth);
+
+            // ログ出力：変更前の高さと幅
+            console.log('[Skybox Resize] 変更前:', {
+                幅: lastWidth,
+                高さ: lastHeight
+            });
+
             lastWidth = width;
             lastHeight = height;
+
+            // ログ出力：変更後の高さと幅
+            console.log('[Skybox Resize] 変更後:', {
+                幅: width,
+                高さ: height,
+                高さの増加: heightIncreased ? `${heightDiff}px` : 'なし',
+                幅の変化: widthChanged ? `${widthDiff}px` : 'なし'
+            });
 
             camera.aspect = width / height;
             camera.updateProjectionMatrix();
