@@ -1283,7 +1283,7 @@ function loadVoiceVolume() {
 // ボイス間隔を設定
 function setVoiceInterval(seconds) {
     if (seconds < 1) seconds = 1;
-    if (seconds > 300) seconds = 300;
+    if (seconds > 600) seconds = 600;
 
     voiceIntervalSeconds = seconds;
 
@@ -1305,13 +1305,13 @@ function loadVoiceInterval() {
     const stored = localStorage.getItem(STORAGE_KEY_VOICE_INTERVAL);
     if (stored) {
         const seconds = parseInt(stored, 10);
-        if (!isNaN(seconds) && seconds >= 1 && seconds <= 300) {
+        if (!isNaN(seconds) && seconds >= 1 && seconds <= 600) {
             setVoiceInterval(seconds);
             return;
         }
     }
-    // デフォルト間隔15秒
-    setVoiceInterval(15);
+    // デフォルト間隔60秒
+    setVoiceInterval(60);
 }
 
 // タイマーを開始する関数
@@ -2534,7 +2534,7 @@ if (voiceMuteBtn) {
 if (voiceIntervalInput) {
     voiceIntervalInput.addEventListener('change', (e) => {
         const seconds = parseInt(e.target.value, 10);
-        if (!isNaN(seconds) && seconds >= 1 && seconds <= 300) {
+        if (!isNaN(seconds) && seconds >= 1 && seconds <= 600) {
             setVoiceInterval(seconds);
         } else {
             // 無効な値の場合は元の値に戻す
@@ -2545,7 +2545,7 @@ if (voiceIntervalInput) {
     // 入力中はリアルタイムで更新しない（changeイベントのみ）
     voiceIntervalInput.addEventListener('input', (e) => {
         const seconds = parseInt(e.target.value, 10);
-        if (isNaN(seconds) || seconds < 1 || seconds > 300) {
+        if (isNaN(seconds) || seconds < 1 || seconds > 600) {
             // 無効な値の場合は赤く表示するなどしてもいいが、今回は何もしない
         }
     });
