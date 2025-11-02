@@ -573,35 +573,35 @@ function switchToNormalImage() {
 // 音声ファイルパスとセリフのマッピング
 const VOICE_SPEECH_MAP = {
     // 応援ボイス
-    'voice/cheer_voice/001_ずんだもん（ノーマル）_集中できててえらい….wav': '集中できててえらいのだ！この調子で頑張るのだ！',
-    'voice/cheer_voice/002_ずんだもん（ノーマル）_ちょっと疲れたら深….wav': 'ちょっと疲れたら深呼吸なのだ、気持ちをリセットするのだ！',
-    'voice/cheer_voice/003_ずんだもん（ノーマル）_がんばってる姿かっ….wav': 'がんばってる姿かっこいいのだ！見てるだけで元気出るのだ！',
-    'voice/cheer_voice/004_ずんだもん（ノーマル）_無理しなくていいの….wav': '無理しなくていいのだ、続けてるだけで十分すごいのだ！',
-    'voice/cheer_voice/005_ずんだもん（ノーマル）_ふふん、このペース….wav': 'ふふん、このペースなら、きっと最後までいけるのだ！',
-    'voice/cheer_voice/006_ずんだもん（ノーマル）_やる気どんどん湧い….wav': 'やる気どんどん湧いてきてるのだ！勢いそのままなのだ！',
-    'voice/cheer_voice/007_ずんだもん（ノーマル）_あきらめたらもった….wav': 'あきらめたらもったいないのだ！あともうちょっと踏ん張るのだ！',
-    'voice/cheer_voice/008_ずんだもん（ノーマル）_目がしょぼしょぼし….wav': '目がしょぼしょぼしたら、一瞬だけ目を閉じるのだ、再起動なのだ！',
-    'voice/cheer_voice/009_ずんだもん（ノーマル）_静かな集中、いい感….wav': '静かな集中、いい感じなのだ、このまま流れに乗るのだ！',
+    'voice/cheer_voice/001_ずんだもん（ノーマル）_集中できててえらい….wav': '集中できててえらいのだ！\nこの調子で頑張るのだ！',
+    'voice/cheer_voice/002_ずんだもん（ノーマル）_ちょっと疲れたら深….wav': 'ちょっと疲れたら深呼吸なのだ、\n気持ちをリセットするのだ！',
+    'voice/cheer_voice/003_ずんだもん（ノーマル）_がんばってる姿かっ….wav': 'がんばってる姿かっこいいのだ！\n見てるだけで元気出るのだ！',
+    'voice/cheer_voice/004_ずんだもん（ノーマル）_無理しなくていいの….wav': '無理しなくていいのだ、\n続けてるだけで十分すごいのだ！',
+    'voice/cheer_voice/005_ずんだもん（ノーマル）_ふふん、このペース….wav': 'ふふん、\nこのペースなら、きっと最後までいけるのだ！',
+    'voice/cheer_voice/006_ずんだもん（ノーマル）_やる気どんどん湧い….wav': 'やる気どんどん湧いてきてるのだ！\n勢いそのままなのだ！',
+    'voice/cheer_voice/007_ずんだもん（ノーマル）_あきらめたらもった….wav': 'あきらめたらもったいないのだ！\nあともうちょっと踏ん張るのだ！',
+    'voice/cheer_voice/008_ずんだもん（ノーマル）_目がしょぼしょぼし….wav': '目がしょぼしょぼしたら、一瞬だけ目を閉じるのだ。\n再起動なのだ！',
+    'voice/cheer_voice/009_ずんだもん（ノーマル）_静かな集中、いい感….wav': '静かな集中、いい感じなのだ。\nこのまま流れに乗るのだ！',
     'voice/cheer_voice/010_ずんだもん（ノーマル）_パワー全開なのだ！….wav': 'パワー全開なのだ！今すごく輝いてるのだ！',
-    'voice/cheer_voice/011_ずんだもん（ノーマル）_集中してる顔、すご….wav': '集中してる顔、すごく真剣なのだ！その勢いで突き進むのだ！',
-    'voice/cheer_voice/012_ずんだもん（ノーマル）_小さな一歩でも、ち….wav': '小さな一歩でも、ちゃんと前に進んでるのだ！あせらなくていいのだ！',
-    'voice/cheer_voice/013_ずんだもん（ノーマル）_手を止めないで、そ….wav': '手を止めないで、そのまま続けるのだ！もう波に乗ってるのだ！',
-    'voice/cheer_voice/014_ずんだもん（ノーマル）_やればやるほど、上….wav': 'やればやるほど、上手くなってるのだ！成長を感じるのだ！',
-    'voice/cheer_voice/015_ずんだもん（ノーマル）_今のリズム、すごく….wav': '今のリズム、すごくいいのだ！このテンポをキープなのだ！',
-    'voice/cheer_voice/016_ずんだもん（ノーマル）_少しずつでも積み重….wav': '少しずつでも積み重ねが大事なのだ！焦らずいくのだ！',
-    'voice/cheer_voice/017_ずんだもん（ノーマル）_集中モード突入なの….wav': '集中モード突入なのだ！このまま誰も止められないのだ！',
-    'voice/cheer_voice/018_ずんだもん（ノーマル）_やりたい気持ちがあ….wav': 'やりたい気持ちがあるだけで、もう勝ってるのだ！',
+    'voice/cheer_voice/011_ずんだもん（ノーマル）_集中してる顔、すご….wav': '集中してる顔、すごく真剣なのだ！\nその勢いで突き進むのだ！',
+    'voice/cheer_voice/012_ずんだもん（ノーマル）_小さな一歩でも、ち….wav': '小さな一歩でも、ちゃんと前に進んでるのだ！\nあせらなくていいのだ！',
+    'voice/cheer_voice/013_ずんだもん（ノーマル）_手を止めないで、そ….wav': '手を止めないで、そのまま続けるのだ！\nもう波に乗ってるのだ！',
+    'voice/cheer_voice/014_ずんだもん（ノーマル）_やればやるほど、上….wav': 'やればやるほど、上手くなってるのだ！\n成長を感じるのだ！',
+    'voice/cheer_voice/015_ずんだもん（ノーマル）_今のリズム、すごく….wav': '今のリズム、すごくいいのだ！\nこのテンポをキープなのだ！',
+    'voice/cheer_voice/016_ずんだもん（ノーマル）_少しずつでも積み重….wav': '少しずつでも積み重ねが大事なのだ！\n焦らずいくのだ！',
+    'voice/cheer_voice/017_ずんだもん（ノーマル）_集中モード突入なの….wav': '集中モード突入なのだ！\nこのまま誰も止められないのだ！',
+    'voice/cheer_voice/018_ずんだもん（ノーマル）_やりたい気持ちがあ….wav': 'やりたい気持ちがあるだけでもう勝ってるのだ！',
     'voice/cheer_voice/019_ずんだもん（ノーマル）_ミスしても大丈夫な….wav': 'ミスしても大丈夫なのだ！その分強くなるのだ！',
     'voice/cheer_voice/020_ずんだもん（ノーマル）_思ったより進んでる….wav': '思ったより進んでるのだ！自分を褒めるのだ！',
-    'voice/cheer_voice/021_ずんだもん（ノーマル）_ちょっと息抜きして….wav': 'ちょっと息抜きして、また戻ってくるのだ！ペース配分も才能なのだ！',
-    'voice/cheer_voice/022_ずんだもん（ノーマル）_大丈夫、できるのだ….wav': '大丈夫、できるのだ！根拠はなくても信じるのだ！',
-    'voice/cheer_voice/023_ずんだもん（ノーマル）_一瞬の迷いなんて気….wav': '一瞬の迷いなんて気にしないのだ！前だけ見るのだ！',
-    'voice/cheer_voice/024_ずんだもん（ノーマル）_頭の中がすっきりし….wav': '頭の中がすっきりしてきたのだ！ゾーンに入ってるのだ！',
-    'voice/cheer_voice/025_ずんだもん（ノーマル）_何度だって挑戦でき….wav': '何度だって挑戦できるのだ！失敗はリセットボタンなのだ！',
-    'voice/cheer_voice/026_ずんだもん（ノーマル）_自分のペースでいい….wav': '自分のペースでいいのだ！人と比べなくていいのだ！',
+    'voice/cheer_voice/021_ずんだもん（ノーマル）_ちょっと息抜きして….wav': 'ちょっと息抜きして、また戻ってくるのだ！\nペース配分も才能なのだ！',
+    'voice/cheer_voice/022_ずんだもん（ノーマル）_大丈夫、できるのだ….wav': '大丈夫、できるのだ！\n根拠はなくても信じるのだ！',
+    'voice/cheer_voice/023_ずんだもん（ノーマル）_一瞬の迷いなんて気….wav': '一瞬の迷いなんて気にしないのだ！\n前だけ見るのだ！',
+    'voice/cheer_voice/024_ずんだもん（ノーマル）_頭の中がすっきりし….wav': '頭の中がすっきりしてきたのだ！\nゾーンに入ってるのだ！',
+    'voice/cheer_voice/025_ずんだもん（ノーマル）_何度だって挑戦でき….wav': '何度だって挑戦できるのだ！\n失敗はリセットボタンなのだ！',
+    'voice/cheer_voice/026_ずんだもん（ノーマル）_自分のペースでいい….wav': '自分のペースでいいのだ！\n人と比べなくていいのだ！',
     'voice/cheer_voice/027_ずんだもん（ノーマル）_静かに燃えてる感じ….wav': '静かに燃えてる感じ、めっちゃかっこいいのだ！',
     'voice/cheer_voice/028_ずんだもん（ノーマル）_やり切った後の達成….wav': 'やり切った後の達成感、想像するだけでワクワクなのだ！',
-    'voice/cheer_voice/029_ずんだもん（ノーマル）_休むのも戦略なのだ….wav': '休むのも戦略なのだ！次の爆発に備えるのだ！',
+    'voice/cheer_voice/029_ずんだもん（ノーマル）_休むのも戦略なのだ….wav': '休むのも戦略なのだ！\n次の爆発に備えるのだ！',
     'voice/cheer_voice/030_ずんだもん（ノーマル）_最後までやり抜いた….wav': '最後までやり抜いたら、きっと世界が変わるのだ！',
 
     // スタートボイス
@@ -687,204 +687,11 @@ function hideSpeechBubble() {
 }
 
 // 吹き出しの幅を画面内に収まるように調整（処理中フラグで連続呼び出しを防ぐ）
+// 削除: 自動改行機能は削除し、位置調整のみに変更
+// この関数は互換性のため残すが、何もしない
 let isAdjustingWidth = false;
 function adjustSpeechBubbleWidth(skipPositionUpdate = false) {
-    const speechBubble = document.getElementById('zundaSpeechBubble');
-    const zundaImage = document.getElementById('zundaImage');
-    if (!speechBubble || !zundaImage) return;
-
-    // 吹き出しが非表示の場合は処理をスキップ
-    if (speechBubble.style.display === 'none') return;
-
-    // 処理中の場合はスキップ（連続呼び出しを防ぐ）
-    if (isAdjustingWidth) return;
-
-    const speechText = speechBubble.querySelector('.speech-bubble-text');
-    if (!speechText) return;
-
-    const textRect = speechText.getBoundingClientRect();
-    const screenWidth = window.innerWidth;
-    const margin = 20;
-    const zundaRect = zundaImage.getBoundingClientRect();
-    const zundaCenterX = zundaRect.left + zundaRect.width / 2;
-
-    const leftEdge = textRect.left;
-    const rightEdge = textRect.right;
-    console.log('左端:', leftEdge, 'px, 右端:', rightEdge, 'px');
-    const isOverflowLeft = leftEdge < margin;
-    const isOverflowRight = rightEdge > screenWidth - margin;
-
-    const oldMaxWidth = speechText.style.maxWidth;
-
-    if (isOverflowLeft || isOverflowRight) {
-        const leftSpace = zundaCenterX - margin;
-        const rightSpace = screenWidth - zundaCenterX - margin;
-
-        // 希望する幅を計算
-        let desiredMaxWidth;
-        if (isOverflowLeft && !isOverflowRight) {
-            // 左端だけはみ出している場合: 左端がmarginに収まるように幅を制限
-            // 中心をzundaCenterXに保つため、左端から中心までの距離 = leftSpace
-            // 最大幅 = leftSpace * 2（ただし、右側の余裕も考慮）
-            desiredMaxWidth = Math.min(leftSpace * 2, rightSpace * 2);
-        } else if (isOverflowRight && !isOverflowLeft) {
-            // 右端だけはみ出している場合: 右端がscreenWidth - marginに収まるように幅を制限
-            // 中心をzundaCenterXに保つため、右端から中心までの距離 = rightSpace
-            // 最大幅 = rightSpace * 2（ただし、左側の余裕も考慮）
-            desiredMaxWidth = Math.min(leftSpace * 2, rightSpace * 2);
-        } else {
-            // どちらもはみ出していない場合は、そのまま返す（実際にはここには到達しないはず）
-            return;
-        }
-
-        // 最小幅を確保
-        desiredMaxWidth = Math.max(150, desiredMaxWidth);
-
-        // maxWidthを設定してから、実際の幅を測定して画面内に収まるかチェック
-        const newMaxWidth = desiredMaxWidth + 'px';
-
-        // 幅が変更されない場合は処理をスキップ
-        if (oldMaxWidth === newMaxWidth && !skipPositionUpdate) {
-            return;
-        }
-
-        // 処理中フラグを立てる
-        isAdjustingWidth = true;
-        speechText.style.maxWidth = newMaxWidth;
-
-        // 予測位置を計算（最初の設定）
-        const predictedLeft = zundaCenterX - desiredMaxWidth / 2;
-        const predictedRight = zundaCenterX + desiredMaxWidth / 2;
-        console.log('[最初の設定] 予測 - 左端:', predictedLeft, 'px, 右端:', predictedRight, 'px, 幅:', desiredMaxWidth, 'px');
-
-        // 幅が変更された場合、位置を更新してから実際の幅をチェック
-        if (!skipPositionUpdate) {
-            requestAnimationFrame(() => {
-                // 位置を更新（中心をzundaCenterXに合わせる）
-                updateSpeechBubblePosition();
-
-                // 位置更新後、実際の幅と位置をチェック
-                requestAnimationFrame(() => {
-                    const actualTextRect = speechText.getBoundingClientRect();
-                    const actualLeft = actualTextRect.left;
-                    const actualRight = actualTextRect.right;
-                    const actualWidth = actualTextRect.width;
-                    console.log('[最初の設定] 実際 - 左端:', actualLeft, 'px, 右端:', actualRight, 'px, 幅:', actualWidth, 'px');
-                    const actualOverflowLeft = actualLeft < margin;
-                    const actualOverflowRight = actualRight > screenWidth - margin;
-
-                    // まだ画面外に出ている場合は、再調整
-                    // 画面端との距離が0になるように幅を設定
-                    if (actualOverflowLeft || actualOverflowRight) {
-                        const updatedZundaRect = zundaImage.getBoundingClientRect();
-                        const updatedZundaCenterX = updatedZundaRect.left + updatedZundaRect.width / 2;
-                        const updatedLeftSpace = updatedZundaCenterX - margin;
-                        const updatedRightSpace = screenWidth - updatedZundaCenterX - margin;
-
-                        // 画面端との距離が0になるように幅を計算
-                        let adjustedMaxWidth;
-                        if (actualOverflowLeft && actualOverflowRight) {
-                            // 両方のはみ出し: 小さい方の余裕に合わせる
-                            adjustedMaxWidth = Math.min(updatedLeftSpace, updatedRightSpace) * 2;
-                        } else if (actualOverflowLeft) {
-                            // 左端がはみ出している場合: 左端をmarginに合わせる（画面端との距離=0）
-                            // 中心がzundaCenterX、左端がmarginになるように幅を設定
-                            adjustedMaxWidth = updatedLeftSpace * 2;
-                            // 右側も画面外に出ないように考慮
-                            adjustedMaxWidth = Math.min(adjustedMaxWidth, updatedRightSpace * 2);
-                        } else {
-                            // 右端がはみ出している場合: 右端をscreenWidth - marginに合わせる（画面端との距離=0）
-                            // 中心がzundaCenterX、右端がscreenWidth - marginになるように幅を設定
-                            adjustedMaxWidth = updatedRightSpace * 2;
-                            // 左側も画面外に出ないように考慮
-                            adjustedMaxWidth = Math.min(adjustedMaxWidth, updatedLeftSpace * 2);
-                        }
-
-                        // 最小幅を確保
-                        adjustedMaxWidth = Math.max(150, adjustedMaxWidth);
-
-                        // 調整後の位置を予測（画面端との距離が0になることを確認）
-                        const adjustedPredictedLeft = updatedZundaCenterX - adjustedMaxWidth / 2;
-                        const adjustedPredictedRight = updatedZundaCenterX + adjustedMaxWidth / 2;
-                        console.log('[再調整] 予測 - 左端:', adjustedPredictedLeft, 'px, 右端:', adjustedPredictedRight, 'px, 幅:', adjustedMaxWidth, 'px');
-
-                        // 画面内に収まるか、画面端との距離が0になることを確認
-                        if (adjustedPredictedLeft >= margin && adjustedPredictedRight <= screenWidth - margin) {
-                            speechText.style.maxWidth = adjustedMaxWidth + 'px';
-
-                            requestAnimationFrame(() => {
-                                updateSpeechBubblePosition();
-
-                                // 再調整後の実際の位置を確認
-                                requestAnimationFrame(() => {
-                                    const finalTextRect = speechText.getBoundingClientRect();
-                                    const finalLeft = finalTextRect.left;
-                                    const finalRight = finalTextRect.right;
-                                    const finalWidth = finalTextRect.width;
-                                    console.log('[再調整] 実際 - 左端:', finalLeft, 'px, 右端:', finalRight, 'px, 幅:', finalWidth, 'px');
-
-                                    // 処理完了後にフラグを解除
-                                    isAdjustingWidth = false;
-                                });
-                            });
-                        } else {
-                            // 再調整が適用されなかった場合もフラグを解除
-                            isAdjustingWidth = false;
-                        }
-                    } else {
-                        // 再調整が不要な場合、フラグを解除
-                        isAdjustingWidth = false;
-                    }
-                });
-            });
-        } else {
-            // skipPositionUpdateがtrueの場合、フラグを解除
-            isAdjustingWidth = false;
-        }
-    } else {
-        // 画面内に収まっている場合、幅制限を解除
-        // ただし、解除後に画面外に出ないか事前に確認
-        // maxWidth='none'の場合の幅を推定するため、一時的にnoneに設定して測定
-        const currentMaxWidth = speechText.style.maxWidth;
-        if (currentMaxWidth !== 'none') {
-            // 処理中フラグを立てる
-            isAdjustingWidth = true;
-            speechText.style.maxWidth = 'none';
-
-            requestAnimationFrame(() => {
-                // 最新のずんだもんの位置を取得
-                const updatedZundaRect = zundaImage.getBoundingClientRect();
-                const updatedZundaCenterX = updatedZundaRect.left + updatedZundaRect.width / 2;
-
-                const unboundedRect = speechText.getBoundingClientRect();
-                const unboundedWidth = unboundedRect.width;
-                const predictedLeft = updatedZundaCenterX - unboundedWidth / 2;
-                const predictedRight = updatedZundaCenterX + unboundedWidth / 2;
-
-                // 画面内に収まる場合のみ幅制限を解除
-                if (predictedLeft >= margin && predictedRight <= screenWidth - margin) {
-                    speechText.style.maxWidth = 'none';
-
-                    // 幅制限を解除した場合も、位置を再計算（無限ループを防ぐため、skipPositionUpdateがfalseの場合のみ）
-                    if (!skipPositionUpdate) {
-                        requestAnimationFrame(() => {
-                            updateSpeechBubblePosition();
-                            // 処理完了後にフラグを解除
-                            isAdjustingWidth = false;
-                        });
-                    } else {
-                        // skipPositionUpdateがtrueの場合、フラグを解除
-                        isAdjustingWidth = false;
-                    }
-                } else {
-                    // 画面外に出る場合は、現在の幅制限を維持
-                    speechText.style.maxWidth = currentMaxWidth;
-                    // フラグを解除
-                    isAdjustingWidth = false;
-                }
-            });
-        }
-    }
+    // 自動改行機能は削除済み。何もしない
 }
 
 // 吹き出しの位置をずんだもんの位置に合わせて更新
@@ -920,8 +727,23 @@ function updateSpeechBubblePosition() {
     const currentBubbleRect = speechBubble.getBoundingClientRect();
     const bubbleWidth = currentBubbleRect.width > 0 ? currentBubbleRect.width : 200; // デフォルト値200px
 
-    // 吹き出しの中心Xが画像の中心Xと一致するようにleftを設定（絶対にズレないように）
-    const leftPosition = zundaCenterX - bubbleWidth / 2;
+    // ずんだもんの中心に吹き出しの中心を合わせる理想的な位置を計算
+    let leftPosition = zundaCenterX - bubbleWidth / 2;
+
+    // 吹き出しが画面外に出ないように位置を調整（幅は変更しない）
+    const screenWidth = window.innerWidth;
+    const edgeMargin = 20; // 画面端からの余白
+
+    // 左端がはみ出す場合
+    if (leftPosition < edgeMargin) {
+        leftPosition = edgeMargin;
+    }
+
+    // 右端がはみ出す場合
+    const rightEdge = leftPosition + bubbleWidth;
+    if (rightEdge > screenWidth - edgeMargin) {
+        leftPosition = screenWidth - edgeMargin - bubbleWidth;
+    }
 
     // topとleftで配置（bottomとrightはautoに）
     speechBubble.style.bottom = 'auto';
@@ -929,18 +751,14 @@ function updateSpeechBubblePosition() {
     speechBubble.style.top = topPosition + 'px';
     speechBubble.style.left = leftPosition + 'px';
 
-    // 位置更新後に幅を調整（無限ループを防ぐため、位置更新をスキップ）
-    adjustSpeechBubbleWidth(true);
-
-    // 幅調整後に再度位置を計算して中心を確実に一致させる
-    requestAnimationFrame(() => {
-        const finalBubbleRect = speechBubble.getBoundingClientRect();
-        const finalBubbleWidth = finalBubbleRect.width > 0 ? finalBubbleRect.width : 200;
-        const finalZundaRect = zundaImage.getBoundingClientRect();
-        const finalZundaCenterX = finalZundaRect.left + finalZundaRect.width / 2;
-        const finalLeftPosition = finalZundaCenterX - finalBubbleWidth / 2;
-        speechBubble.style.left = finalLeftPosition + 'px';
-    });
+    // 三角形（ぴょこ）の位置をずんだもんの中心Xに合わせる
+    const speechText = speechBubble.querySelector('.speech-bubble-text');
+    if (speechText) {
+        // ずんだもんの中心Xから吹き出しの左端までの距離を計算
+        // 三角形の位置は吹き出しの左端からの相対位置で指定
+        const triangleOffset = zundaCenterX - leftPosition;
+        speechText.style.setProperty('--triangle-offset', triangleOffset + 'px');
+    }
 }
 
 // ボイスが再生中かどうかをチェック

@@ -2093,20 +2093,19 @@ body:not(.timer-running) .statistics-period-select option {
     font-size: 14px;
     line-height: 1.4;
     max-width: none;
-    /* デフォルトでは幅制限なし */
+    /* デフォルトでは幅制限なし（自動改行機能は削除済み） */
     word-wrap: break-word;
     overflow-wrap: break-word;
     position: relative;
     white-space: pre-line;
     /* 改行文字（\n）を反映する */
-    /* 基本的に改行しないが、画面外に出る場合は折り返す */
 }
 
 .speech-bubble-text::after {
     content: '';
     position: absolute;
     bottom: -8px;
-    left: 50%;
+    left: var(--triangle-offset, 50%);
     transform: translateX(-50%);
     width: 0;
     height: 0;
