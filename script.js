@@ -2411,7 +2411,22 @@ function setupTimelineZoom() {
         e.stopPropagation();
 
         const delta = e.deltaY;
-        const zoomChange = delta > 0 ? -TIMELINE_ZOOM_STEP : TIMELINE_ZOOM_STEP;
+
+        // ズームレベルに応じてステップを動的に調整（高いズーム率ほど感度を上げる）
+        let dynamicStep = TIMELINE_ZOOM_STEP;
+        if (timelineZoomLevel >= 3.5) {
+            dynamicStep = 0.2; // 非常に高いズーム率の時
+        } else if (timelineZoomLevel >= 2.5) {
+            dynamicStep = 0.15; // 高いズーム率の時
+        } else if (timelineZoomLevel >= 1.5) {
+            dynamicStep = 0.12; // 中程度のズーム率の時
+        } else if (timelineZoomLevel >= 1.0) {
+            dynamicStep = 0.08; // 低いズーム率の時
+        } else {
+            dynamicStep = 0.05; // 最小ズーム率の時
+        }
+
+        const zoomChange = delta > 0 ? -dynamicStep : dynamicStep;
         const oldZoomLevel = timelineZoomLevel;
         const newZoomLevel = Math.max(TIMELINE_MIN_ZOOM, Math.min(TIMELINE_MAX_ZOOM, timelineZoomLevel + zoomChange));
 
@@ -2465,6 +2480,8 @@ function applyTimelineZoom(scrollWrapperElement, contentElement, shadowsElement,
     const backgroundElement = scrollWrapperElement.querySelector('.timeline-background');
     if (backgroundElement) {
         backgroundElement.style.width = `${scaledWidth}px`;
+        // min-widthをスクロールラッパーの幅に合わせる
+        backgroundElement.style.minWidth = `${baseWidth}px`;
     }
 
     // コンテンツの幅を変更（スクロール可能にするため）
@@ -2474,6 +2491,8 @@ function applyTimelineZoom(scrollWrapperElement, contentElement, shadowsElement,
     hoursElement.style.width = `${scaledWidth}px`;
     if (shadowsElement) {
         shadowsElement.style.width = `${scaledWidth}px`;
+        // min-widthをスクロールラッパーの幅に合わせる
+        shadowsElement.style.minWidth = `${baseWidth}px`;
     }
 
     // transformは使わない（フォントの縦長化を防ぐ）
