@@ -21,6 +21,12 @@ let selectedDate = null; // 選択中の日付（YYYY-MM-DD形式）
 // 統計の状態管理
 let statisticsPeriod = 'all'; // 'all', 'month', 'week'
 
+// タイムテーブルのズーム状態管理
+let timelineZoomLevel = 1.0; // ズームレベル（1.0が標準）
+const TIMELINE_MIN_ZOOM = 1.0; // 最小ズーム（0時が左端、24時が右端になるまで）
+const TIMELINE_MAX_ZOOM = 5.0; // 最大ズーム
+const TIMELINE_ZOOM_STEP = 0.1; // ズームのステップ
+
 // ローカルストレージのキー
 const STORAGE_KEY_RECORDS = 'workingTimer_records';
 const STORAGE_KEY_TAGS = 'workingTimer_tags';
@@ -37,36 +43,36 @@ let END_VOICE_FILES = []; // エンドボイスファイルのリスト
 
 // 既知のボイスファイルリスト（サーバー環境ではPHPスクリプトで自動検出される）
 const KNOWN_VOICE_FILES = [
-    'cheer_voice/001_ずんだもん（ノーマル）_集中できててえらい….wav',
-    'cheer_voice/002_ずんだもん（ノーマル）_ちょっと疲れたら深….wav',
-    'cheer_voice/003_ずんだもん（ノーマル）_がんばってる姿かっ….wav',
-    'cheer_voice/004_ずんだもん（ノーマル）_無理しなくていいの….wav',
-    'cheer_voice/005_ずんだもん（ノーマル）_ふふん、このペース….wav',
-    'cheer_voice/006_ずんだもん（ノーマル）_やる気どんどん湧い….wav',
-    'cheer_voice/007_ずんだもん（ノーマル）_あきらめたらもった….wav',
-    'cheer_voice/008_ずんだもん（ノーマル）_目がしょぼしょぼし….wav',
-    'cheer_voice/009_ずんだもん（ノーマル）_静かな集中、いい感….wav',
-    'cheer_voice/010_ずんだもん（ノーマル）_パワー全開なのだ！….wav',
-    'cheer_voice/011_ずんだもん（ノーマル）_集中してる顔、すご….wav',
-    'cheer_voice/012_ずんだもん（ノーマル）_小さな一歩でも、ち….wav',
-    'cheer_voice/013_ずんだもん（ノーマル）_手を止めないで、そ….wav',
-    'cheer_voice/014_ずんだもん（ノーマル）_やればやるほど、上….wav',
-    'cheer_voice/015_ずんだもん（ノーマル）_今のリズム、すごく….wav',
-    'cheer_voice/016_ずんだもん（ノーマル）_少しずつでも積み重….wav',
-    'cheer_voice/017_ずんだもん（ノーマル）_集中モード突入なの….wav',
-    'cheer_voice/018_ずんだもん（ノーマル）_やりたい気持ちがあ….wav',
-    'cheer_voice/019_ずんだもん（ノーマル）_ミスしても大丈夫な….wav',
-    'cheer_voice/020_ずんだもん（ノーマル）_思ったより進んでる….wav',
-    'cheer_voice/021_ずんだもん（ノーマル）_ちょっと息抜きして….wav',
-    'cheer_voice/022_ずんだもん（ノーマル）_大丈夫、できるのだ….wav',
-    'cheer_voice/023_ずんだもん（ノーマル）_一瞬の迷いなんて気….wav',
-    'cheer_voice/024_ずんだもん（ノーマル）_頭の中がすっきりし….wav',
-    'cheer_voice/025_ずんだもん（ノーマル）_何度だって挑戦でき….wav',
-    'cheer_voice/026_ずんだもん（ノーマル）_自分のペースでいい….wav',
-    'cheer_voice/027_ずんだもん（ノーマル）_静かに燃えてる感じ….wav',
-    'cheer_voice/028_ずんだもん（ノーマル）_やり切った後の達成….wav',
-    'cheer_voice/029_ずんだもん（ノーマル）_休むのも戦略なのだ….wav',
-    'cheer_voice/030_ずんだもん（ノーマル）_最後までやり抜いた….wav'
+    'voice/cheer_voice/001_ずんだもん（ノーマル）_集中できててえらい….wav',
+    'voice/cheer_voice/002_ずんだもん（ノーマル）_ちょっと疲れたら深….wav',
+    'voice/cheer_voice/003_ずんだもん（ノーマル）_がんばってる姿かっ….wav',
+    'voice/cheer_voice/004_ずんだもん（ノーマル）_無理しなくていいの….wav',
+    'voice/cheer_voice/005_ずんだもん（ノーマル）_ふふん、このペース….wav',
+    'voice/cheer_voice/006_ずんだもん（ノーマル）_やる気どんどん湧い….wav',
+    'voice/cheer_voice/007_ずんだもん（ノーマル）_あきらめたらもった….wav',
+    'voice/cheer_voice/008_ずんだもん（ノーマル）_目がしょぼしょぼし….wav',
+    'voice/cheer_voice/009_ずんだもん（ノーマル）_静かな集中、いい感….wav',
+    'voice/cheer_voice/010_ずんだもん（ノーマル）_パワー全開なのだ！….wav',
+    'voice/cheer_voice/011_ずんだもん（ノーマル）_集中してる顔、すご….wav',
+    'voice/cheer_voice/012_ずんだもん（ノーマル）_小さな一歩でも、ち….wav',
+    'voice/cheer_voice/013_ずんだもん（ノーマル）_手を止めないで、そ….wav',
+    'voice/cheer_voice/014_ずんだもん（ノーマル）_やればやるほど、上….wav',
+    'voice/cheer_voice/015_ずんだもん（ノーマル）_今のリズム、すごく….wav',
+    'voice/cheer_voice/016_ずんだもん（ノーマル）_少しずつでも積み重….wav',
+    'voice/cheer_voice/017_ずんだもん（ノーマル）_集中モード突入なの….wav',
+    'voice/cheer_voice/018_ずんだもん（ノーマル）_やりたい気持ちがあ….wav',
+    'voice/cheer_voice/019_ずんだもん（ノーマル）_ミスしても大丈夫な….wav',
+    'voice/cheer_voice/020_ずんだもん（ノーマル）_思ったより進んでる….wav',
+    'voice/cheer_voice/021_ずんだもん（ノーマル）_ちょっと息抜きして….wav',
+    'voice/cheer_voice/022_ずんだもん（ノーマル）_大丈夫、できるのだ….wav',
+    'voice/cheer_voice/023_ずんだもん（ノーマル）_一瞬の迷いなんて気….wav',
+    'voice/cheer_voice/024_ずんだもん（ノーマル）_頭の中がすっきりし….wav',
+    'voice/cheer_voice/025_ずんだもん（ノーマル）_何度だって挑戦でき….wav',
+    'voice/cheer_voice/026_ずんだもん（ノーマル）_自分のペースでいい….wav',
+    'voice/cheer_voice/027_ずんだもん（ノーマル）_静かに燃えてる感じ….wav',
+    'voice/cheer_voice/028_ずんだもん（ノーマル）_やり切った後の達成….wav',
+    'voice/cheer_voice/029_ずんだもん（ノーマル）_休むのも戦略なのだ….wav',
+    'voice/cheer_voice/030_ずんだもん（ノーマル）_最後までやり抜いた….wav'
 ];
 
 // ボイスファイルリストを動的に検出する
@@ -90,7 +96,7 @@ async function loadCheerVoiceFiles() {
 
         // 方法2: ディレクトリリスティングから取得（サーバーが許可している場合）
         try {
-            const files = await getFilesFromDirectoryListing('cheer_voice/');
+            const files = await getFilesFromDirectoryListing('voice/cheer_voice/');
             if (files.length > 0) {
                 CHEER_VOICE_FILES = files;
                 console.log(`ディレクトリリスティングから ${CHEER_VOICE_FILES.length}個のファイルを検出しました`);
@@ -127,7 +133,7 @@ async function loadStartVoiceFiles() {
 
         // 方法2: ディレクトリリスティングから取得
         try {
-            const files = await getFilesFromDirectoryListing('start_voice/');
+            const files = await getFilesFromDirectoryListing('voice/start_voice/');
             if (files.length > 0) {
                 START_VOICE_FILES = files;
                 console.log(`ディレクトリリスティングからスタートボイス ${START_VOICE_FILES.length}個を検出しました`);
@@ -164,7 +170,7 @@ async function loadEndVoiceFiles() {
 
         // 方法2: ディレクトリリスティングから取得
         try {
-            const files = await getFilesFromDirectoryListing('end_voice/');
+            const files = await getFilesFromDirectoryListing('voice/end_voice/');
             if (files.length > 0) {
                 END_VOICE_FILES = files;
                 console.log(`ディレクトリリスティングからエンドボイス ${END_VOICE_FILES.length}個を検出しました`);
@@ -183,16 +189,16 @@ async function loadEndVoiceFiles() {
 
 // 既知のスタートボイスファイルリスト（フォールバック用）
 const KNOWN_START_VOICE_FILES = [
-    'start_voice/001_ずんだもん（ノーマル）_作業、スタートなの….wav'
+    'voice/start_voice/001_ずんだもん（ノーマル）_作業、スタートなの….wav'
 ];
 
 // 既知のエンドボイスファイルリスト（フォールバック用）
 const KNOWN_END_VOICE_FILES = [
-    'end_voice/002_ずんだもん（ノーマル）_お疲れ様なのだ！よ….wav'
+    'voice/end_voice/002_ずんだもん（ノーマル）_お疲れ様なのだ！よ….wav'
 ];
 
 // ディレクトリリスティングからファイルを取得（サーバー環境のみ）
-async function getFilesFromDirectoryListing(dir = 'cheer_voice/') {
+async function getFilesFromDirectoryListing(dir = 'voice/cheer_voice/') {
     try {
         const response = await fetch(dir);
         if (!response.ok) return [];
@@ -1043,6 +1049,14 @@ function displayRecords(targetDate = null) {
 
     // 特定の日付の記録のみを表示
     filteredRecords = records.filter(record => record.date === targetDate);
+
+    // 開始時刻でソート
+    filteredRecords.sort((a, b) => {
+        const aTime = parseTime(a.startTime);
+        const bTime = parseTime(b.startTime);
+        return aTime - bTime;
+    });
+
     const dateObj = new Date(targetDate);
     const displayDate = `${dateObj.getFullYear()}年${dateObj.getMonth() + 1}月${dateObj.getDate()}日`;
     if (recordsSectionTitle) {
@@ -2054,7 +2068,303 @@ function updateStatistics() {
         html += '</div>';
     }
 
+    // 今日の作業記録タイムテーブルを追加
+    html += generateTodayTimeline();
+
     statisticsContent.innerHTML = html;
+
+    // タイムテーブルのズーム機能を設定
+    setupTimelineZoom();
+}
+
+// 今日の作業記録タイムテーブルを生成
+function generateTodayTimeline() {
+    const today = new Date();
+    const todayStr = formatDate(today); // YYYY-MM-DD形式
+
+    const records = loadRecords();
+    const todayRecords = records.filter(record => record.date === todayStr);
+
+    if (todayRecords.length === 0) {
+        return '<div class="timeline-empty">今日の作業記録はありません</div>';
+    }
+
+    // 作業記録を開始時刻でソート
+    todayRecords.sort((a, b) => {
+        const aTime = parseTime(a.startTime);
+        const bTime = parseTime(b.startTime);
+        return aTime - bTime;
+    });
+
+    let html = '<div class="timeline-section">';
+    html += '<div class="timeline-title">今日の作業記録</div>';
+    html += '<div class="timeline-container">';
+    html += '<div class="timeline-container-scroll">';
+    html += '<div class="timeline-background"></div>';
+    html += '<div class="timeline-hours">';
+
+    // 0時から24時までの時間表示（3時間ごと）
+    for (let hour = 0; hour <= 24; hour += 3) {
+        const hourPercent = (hour / 24) * 100;
+        html += `<div class="timeline-hour" data-hour-percent="${hourPercent}" style="left: ${hourPercent}%">${hour}時</div>`;
+    }
+
+    html += '</div>';
+    html += '<div class="timeline-bars">';
+
+    // 重なりを検出して縦に配置
+    const lanes = [];
+    todayRecords.forEach(record => {
+        const startTime = parseTime(record.startTime);
+        const endTime = parseTime(record.endTime);
+
+        // 開始時刻と終了時刻を0-24時での位置（%）に変換
+        const left = (startTime / (24 * 60 * 60)) * 100;
+        const width = ((endTime - startTime) / (24 * 60 * 60)) * 100;
+
+        // 重なっていないレーンを見つける
+        let laneIndex = 0;
+        while (laneIndex < lanes.length) {
+            const hasOverlap = lanes[laneIndex].some(existing => {
+                const existingLeft = parseTime(existing.startTime) / (24 * 60 * 60) * 100;
+                const existingWidth = (parseTime(existing.endTime) - parseTime(existing.startTime)) / (24 * 60 * 60) * 100;
+                const existingRight = existingLeft + existingWidth;
+                const currentRight = left + width;
+
+                // 重なりをチェック
+                return !(currentRight <= existingLeft || left >= existingRight);
+            });
+
+            if (!hasOverlap) {
+                break;
+            }
+            laneIndex++;
+        }
+
+        // 必要に応じて新しいレーンを作成
+        if (laneIndex >= lanes.length) {
+            lanes.push([]);
+        }
+
+        lanes[laneIndex].push({
+            ...record,
+            laneIndex: laneIndex
+        });
+    });
+
+    // 各レーンに配置された帯を描画
+    lanes.forEach((lane, laneIdx) => {
+        lane.forEach(record => {
+            const startTime = parseTime(record.startTime);
+            const endTime = parseTime(record.endTime);
+
+            // 開始時刻と終了時刻を0-24時での位置（%）に変換
+            const left = (startTime / (24 * 60 * 60)) * 100;
+            const width = ((endTime - startTime) / (24 * 60 * 60)) * 100;
+
+            // タグがあれば色分け（最初のタグを使用）
+            const tagColor = record.tags && record.tags.length > 0 ? getTagColor(record.tags[0]) : '#7c8aff';
+
+            // 作業内容があればツールチップに表示
+            const tooltip = record.description ?
+                `${record.startTime} - ${record.endTime}\n${record.description}` :
+                `${record.startTime} - ${record.endTime}`;
+
+            // レーンごとに縦位置を調整
+            const topOffset = 5 + record.laneIndex * 35;
+
+            html += `
+                <div class="timeline-bar" 
+                     data-left-percent="${left}"
+                     data-width-percent="${width}"
+                     style="left: ${left}%; width: ${width}%; background-color: ${tagColor}; top: ${topOffset}px;"
+                     title="${tooltip.replace(/\n/g, ' / ')}">
+                    <div class="timeline-bar-label">${formatDurationWithSeconds((record.duration || 0) * 60 + (record.durationSeconds || 0))}</div>
+                </div>
+            `;
+        });
+    });
+
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+
+    return html;
+}
+
+// タイムテーブルのズーム機能を設定
+function setupTimelineZoom() {
+    const timelineContainer = document.querySelector('.timeline-container');
+    if (!timelineContainer) return;
+
+    const timelineScrollWrapper = timelineContainer.querySelector('.timeline-container-scroll');
+    const timelineContent = timelineContainer.querySelector('.timeline-bars');
+    const timelineHours = timelineContainer.querySelector('.timeline-hours');
+    if (!timelineScrollWrapper || !timelineContent || !timelineHours) return;
+
+    // 初期ズームレベルを適用
+    applyTimelineZoom(timelineScrollWrapper, timelineContent, timelineHours, timelineZoomLevel);
+
+    // ドラッグでスクロールする機能
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartScrollLeft = 0;
+
+    timelineContainer.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartScrollLeft = timelineScrollWrapper.scrollLeft;
+        timelineContainer.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const deltaX = e.clientX - dragStartX;
+        timelineScrollWrapper.scrollLeft = dragStartScrollLeft - deltaX;
+        e.preventDefault();
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            timelineContainer.style.cursor = 'grab';
+        }
+    });
+
+    // マウスがタイムテーブルから離れた場合もドラッグを終了
+    timelineContainer.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            isDragging = false;
+            timelineContainer.style.cursor = 'grab';
+        }
+    });
+
+    // マウスホイールイベントでズーム（タイムテーブル内のみ）
+    timelineContainer.addEventListener('wheel', (e) => {
+        // ドラッグ中はズームしない
+        if (isDragging) {
+            return;
+        }
+        // タイムテーブルコンテナ内でのみ処理（子要素からのイベントも含む）
+        // イベントの伝播を防ぐ（統計セクションなどの親要素への伝播を防止）
+        e.preventDefault();
+        e.stopPropagation();
+
+        const delta = e.deltaY;
+        const zoomChange = delta > 0 ? -TIMELINE_ZOOM_STEP : TIMELINE_ZOOM_STEP;
+        const oldZoomLevel = timelineZoomLevel;
+        const newZoomLevel = Math.max(TIMELINE_MIN_ZOOM, Math.min(TIMELINE_MAX_ZOOM, timelineZoomLevel + zoomChange));
+
+        // ズームレベルが変わらない場合は何もしない
+        if (oldZoomLevel === newZoomLevel) {
+            return;
+        }
+
+        // マウスの位置を基準にズーム
+        const rect = timelineScrollWrapper.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const scrollLeft = timelineScrollWrapper.scrollLeft;
+        const containerWidth = rect.width;
+
+        // ズーム前のコンテンツ内でのマウスの絶対位置を計算
+        // これは、コンテンツの左端からマウスの位置までの距離
+        const contentPositionBeforeZoom = scrollLeft + mouseX;
+
+        // ズームレベルを更新
+        timelineZoomLevel = newZoomLevel;
+        applyTimelineZoom(timelineScrollWrapper, timelineContent, timelineHours, timelineZoomLevel, containerWidth);
+
+        // ズーム後のコンテンツ幅
+        const newContentWidth = containerWidth * timelineZoomLevel;
+
+        // ズーム後、同じコンテンツ内の位置がマウスの下に来るようにスクロール位置を計算
+        // ズーム前の位置をズーム比率でスケールした後、マウスの位置を引く
+        const zoomRatio = newZoomLevel / oldZoomLevel;
+        const contentPositionAfterZoom = contentPositionBeforeZoom * zoomRatio;
+        const newScrollLeft = contentPositionAfterZoom - mouseX;
+
+        // スクロール位置を調整（範囲内に制限）
+        timelineScrollWrapper.scrollLeft = Math.max(0, Math.min(newScrollLeft, newContentWidth - containerWidth));
+    }, { passive: false });
+}
+
+// タイムテーブルにズームを適用
+function applyTimelineZoom(scrollWrapperElement, contentElement, hoursElement, zoomLevel, baseWidth = null) {
+    if (!contentElement || !hoursElement || !scrollWrapperElement) return;
+
+    // スクロールラッパーの実際の幅を取得
+    if (!baseWidth) {
+        const scrollRect = scrollWrapperElement.getBoundingClientRect();
+        baseWidth = scrollRect.width;
+    }
+
+    const scaledWidth = baseWidth * zoomLevel;
+
+    // 背景要素も取得して幅を調整
+    const backgroundElement = scrollWrapperElement.querySelector('.timeline-background');
+    if (backgroundElement) {
+        backgroundElement.style.width = `${scaledWidth}px`;
+    }
+
+    // コンテンツの幅を変更（スクロール可能にするため）
+    // ただし、コンテナの見た目のサイズは変わらない（overflow-x: auto でスクロール）
+    // widthを直接設定することで、親要素のサイズに影響を与えない
+    contentElement.style.width = `${scaledWidth}px`;
+    hoursElement.style.width = `${scaledWidth}px`;
+
+    // transformは使わない（フォントの縦長化を防ぐ）
+    contentElement.style.transform = 'none';
+    hoursElement.style.transform = 'none';
+
+    // 各時間表示の位置を再計算（パーセンテージからpxに変換）
+    const hourElements = hoursElement.querySelectorAll('.timeline-hour');
+    hourElements.forEach(hourEl => {
+        const hourPercent = parseFloat(hourEl.getAttribute('data-hour-percent'));
+        hourEl.style.left = `${(hourPercent / 100) * scaledWidth}px`;
+    });
+
+    // 各帯の位置と幅を再計算（パーセンテージからpxに変換）
+    const barElements = contentElement.querySelectorAll('.timeline-bar');
+    barElements.forEach(barEl => {
+        const leftPercent = parseFloat(barEl.getAttribute('data-left-percent'));
+        const widthPercent = parseFloat(barEl.getAttribute('data-width-percent'));
+        barEl.style.left = `${(leftPercent / 100) * scaledWidth}px`;
+        barEl.style.width = `${(widthPercent / 100) * scaledWidth}px`;
+    });
+}
+
+// 時刻文字列（HH:MM:SS または HH:MM）を秒数に変換
+function parseTime(timeStr) {
+    if (!timeStr) return 0;
+
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return 0;
+
+    const hours = parseInt(parts[0], 10) || 0;
+    const minutes = parseInt(parts[1], 10) || 0;
+    const seconds = parts.length > 2 ? (parseInt(parts[2], 10) || 0) : 0;
+
+    return hours * 3600 + minutes * 60 + seconds;
+}
+
+// タグの色を取得（同じタグには同じ色を返す）
+function getTagColor(tag) {
+    // タグのハッシュ値を使って色を決定
+    let hash = 0;
+    for (let i = 0; i < tag.length; i++) {
+        hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    // 色相を決定（0-360度）
+    const hue = Math.abs(hash) % 360;
+
+    // HSLからRGBに変換（彩度と明度は固定）
+    const saturation = 70;
+    const lightness = 60;
+
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
 // 期間に応じて記録をフィルタリング

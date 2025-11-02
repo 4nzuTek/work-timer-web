@@ -5,13 +5,13 @@ $requestedType = isset($_GET['type']) ? $_GET['type'] : 'cheer';
 
 if ($requestedType === 'start') {
     // スタートボイスフォルダ
-    $voiceDir = 'start_voice/';
+    $voiceDir = 'voice/start_voice/';
 } else if ($requestedType === 'end') {
     // エンドボイスフォルダ
-    $voiceDir = 'end_voice/';
+    $voiceDir = 'voice/end_voice/';
 } else {
     // 応援ボイスフォルダ（デフォルト）
-    $voiceDir = 'cheer_voice/';
+    $voiceDir = 'voice/cheer_voice/';
 }
 
 $files = [];

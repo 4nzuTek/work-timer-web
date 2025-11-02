@@ -865,6 +865,173 @@ header h1 {
     text-align: right;
 }
 
+/* 今日の作業記録タイムテーブル */
+.timeline-section {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid #3a3a4e;
+}
+
+.timeline-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 15px;
+}
+
+.timeline-container {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    max-width: 100%;
+    background-color: #1a1a2e;
+    border: 1px solid #3a3a4e;
+    border-radius: 8px;
+    padding: 10px;
+    overflow: hidden;
+    cursor: grab;
+    box-sizing: border-box;
+}
+
+.timeline-container:active {
+    cursor: grabbing;
+}
+
+.timeline-container-scroll {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    box-sizing: border-box;
+    /* スクロールバーを非表示 */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+}
+
+.timeline-container-scroll::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari/Opera */
+}
+
+.timeline-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    pointer-events: none;
+    z-index: 0;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    /* 時刻に応じた空の色のグラデーション背景 */
+    background: linear-gradient(to right,
+            #050029 0%,
+            #160050 4%,
+            #28096B 8%,
+            #3B348C 12%,
+            #5758A2 16%,
+            #85ABDC 20%,
+            #BADFF7 24%,
+            #AEDAF3 28%,
+            #9BD2F4 32%,
+            #8ED1FA 36%,
+            #7CC8F0 40%,
+            #6DBFEB 44%,
+            #5AB9EB 48%,
+            #47B4EA 52%,
+            #6CBAEC 56%,
+            #95D2DE 60%,
+            #C1C795 64%,
+            #D9AF59 68%,
+            #E7740B 72%,
+            #AB5646 76%,
+            #6C2E67 80%,
+            #381C89 84%,
+            #391D8A 88%,
+            #280B6C 92%,
+            #1F0065 96%,
+            #0B0044 100%);
+    /* グラデーションにぼかしを適用して滑らかに */
+    filter: blur(20px);
+}
+
+.timeline-hours {
+    position: relative;
+    height: 20px;
+    margin-bottom: 10px;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block;
+    min-width: 100%;
+    z-index: 1;
+}
+
+.timeline-hour {
+    position: absolute;
+    font-size: 11px;
+    color: #888;
+    transform: translateX(-50%);
+    pointer-events: none;
+    white-space: nowrap;
+    transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.timeline-bars {
+    position: relative;
+    min-height: 80px;
+    padding-bottom: 10px;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block;
+    min-width: 100%;
+    z-index: 1;
+}
+
+.timeline-bar {
+    position: absolute;
+    height: 30px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1), width 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2px;
+}
+
+.timeline-bar:hover {
+    transform: scaleY(1.2);
+    box-shadow: 0 2px 8px rgba(124, 138, 255, 0.5);
+    z-index: 10;
+}
+
+.timeline-bar-label {
+    font-size: 10px;
+    color: #fff;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.timeline-bar:hover .timeline-bar-label {
+    opacity: 1;
+}
+
+.timeline-empty {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid #3a3a4e;
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+}
+
 .records-section h2 {
     color: #e0e0e0;
     font-size: 22px;
