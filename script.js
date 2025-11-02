@@ -39,6 +39,13 @@ const STORAGE_KEY_VOICE_MUTED = 'workingTimer_voice_muted';
 const STORAGE_KEY_LAST_DESCRIPTION = 'workingTimer_last_description';
 const STORAGE_KEY_LAST_SELECTED_TAGS = 'workingTimer_last_selected_tags';
 const STORAGE_KEY_ZUNDA_POSITION = 'workingTimer_zunda_position';
+const STORAGE_KEY_STATISTICS_PERIOD = 'workingTimer_statistics_period';
+
+// localStorageから統計期間を読み込む
+const storedStatisticsPeriod = localStorage.getItem(STORAGE_KEY_STATISTICS_PERIOD);
+if (storedStatisticsPeriod && ['all', 'month', 'week', 'day'].includes(storedStatisticsPeriod)) {
+    statisticsPeriod = storedStatisticsPeriod;
+}
 
 // ボイスファイルのリスト（動的に読み込む）
 let CHEER_VOICE_FILES = [];
@@ -2492,6 +2499,7 @@ if (statisticsPeriodSelect) {
     statisticsPeriodSelect.value = statisticsPeriod; // 初期値を設定
     statisticsPeriodSelect.addEventListener('change', (e) => {
         statisticsPeriod = e.target.value;
+        localStorage.setItem(STORAGE_KEY_STATISTICS_PERIOD, statisticsPeriod);
         updateStatistics();
     });
 }
