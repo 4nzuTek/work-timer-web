@@ -184,17 +184,20 @@ header h1 {
     font-size: 14px;
     text-align: center;
     outline: none;
+    /* スピナーボタンを非表示 */
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.voice-interval-input::-webkit-outer-spin-button,
+.voice-interval-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .voice-interval-input:focus {
     border-color: #7c8aff;
     box-shadow: 0 0 0 2px rgba(124, 138, 255, 0.2);
-}
-
-.voice-interval-input::-webkit-inner-spin-button,
-.voice-interval-input::-webkit-outer-spin-button {
-    opacity: 1;
-    cursor: pointer;
 }
 
 .mute-btn {
@@ -315,21 +318,21 @@ header h1 {
 }
 
 .btn-pause {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #d977a8 0%, #c9435f 100%);
     color: white;
 }
 
 .btn-pause:hover:not(:disabled) {
-    background: linear-gradient(135deg, #e083eb 0%, #e5475c 100%);
+    background: linear-gradient(135deg, #c96798 0%, #b9334f 100%);
 }
 
 .btn-end {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background: linear-gradient(135deg, #2f7ac8 0%, #008fa8 100%);
     color: white;
 }
 
 .btn-end:hover:not(:disabled) {
-    background: linear-gradient(135deg, #3f9cee 0%, #00e2ee 100%);
+    background: linear-gradient(135deg, #1f6ab8 0%, #007f98 100%);
 }
 
 .description-input-section {
@@ -1122,6 +1125,27 @@ header h1 {
     min-height: 300px;
     /* カレンダーの下に配置するため、高さを調整 */
     max-height: 400px;
+    /* ダークモード用スクロールバー（Firefox） */
+    scrollbar-width: thin;
+    scrollbar-color: #4a4a5e #2a2a3e;
+}
+
+.records-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.records-list::-webkit-scrollbar-track {
+    background: #2a2a3e;
+    border-radius: 4px;
+}
+
+.records-list::-webkit-scrollbar-thumb {
+    background: #4a4a5e;
+    border-radius: 4px;
+}
+
+.records-list::-webkit-scrollbar-thumb:hover {
+    background: #5a5a6e;
 }
 
 .no-records {
@@ -1588,6 +1612,29 @@ body:not(.timer-running) .timeline-container {
 
 body:not(.timer-running) .statistics-tag-value {
     color: #ffffff;
+}
+
+/* タイマー停止中：記録一覧のスクロールバーをグレースケールに */
+body:not(.timer-running) .records-list {
+    scrollbar-color: #555 #3a3a3a;
+}
+
+body:not(.timer-running) .records-list::-webkit-scrollbar-track {
+    background: #3a3a3a;
+}
+
+body:not(.timer-running) .records-list::-webkit-scrollbar-thumb {
+    background: #555;
+}
+
+body:not(.timer-running) .records-list::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+/* タイマー停止中：ボイス間隔入力をグレースケールに */
+body:not(.timer-running) .voice-interval-input {
+    background-color: #3a3a3a;
+    border-color: #555;
 }
 
 /* モーダルダイアログ */
