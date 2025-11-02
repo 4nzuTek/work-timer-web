@@ -22,8 +22,8 @@ let selectedDate = null; // 選択中の日付（YYYY-MM-DD形式）
 let statisticsPeriod = 'all'; // 'all', 'month', 'week', 'day'
 
 // タイムテーブルのズーム状態管理
-let timelineZoomLevel = 1.0; // ズームレベル（1.0が標準）
-const TIMELINE_MIN_ZOOM = 1.0; // 最小ズーム（0時が左端、24時が右端になるまで）
+let timelineZoomLevel = 0.98; // ズームレベル（初期値は最小ズーム）
+const TIMELINE_MIN_ZOOM = 0.98; // 最小ズーム（スクロールバーが出ないように少し余裕を持たせる）
 const TIMELINE_MAX_ZOOM = 5.0; // 最大ズーム
 const TIMELINE_ZOOM_STEP = 0.1; // ズームのステップ
 
@@ -2249,6 +2249,7 @@ function generateTimeline(targetDateStr) {
     }
 
     html += '</div>';
+    html += '<div class="timeline-bar-shadows"></div>';
     html += '<div class="timeline-bars">';
 
     // 重なりを検出して縦に配置
@@ -2291,7 +2292,10 @@ function generateTimeline(targetDateStr) {
         });
     });
 
-    // 各レーンに配置された帯を描画
+    // 影専用レイヤーのHTMLを生成
+    let shadowsHtml = '';
+
+    // 各レーンに配置された帯を描画（影も同時に生成）
     lanes.forEach((lane, laneIdx) => {
         lane.forEach(record => {
             const startTime = parseTime(record.startTime);
@@ -2312,6 +2316,16 @@ function generateTimeline(targetDateStr) {
             // レーンごとに縦位置を調整
             const topOffset = 5 + record.laneIndex * 35;
 
+            // 影要素を生成
+            shadowsHtml += `
+                <div class="timeline-bar-shadow" 
+                     data-left-percent="${left}"
+                     data-width-percent="${width}"
+                     data-top="${topOffset}"
+                     style="left: ${left}%; width: ${width}%; top: ${topOffset}px;"></div>
+            `;
+
+            // 実際のイベント要素を生成
             html += `
                 <div class="timeline-bar" 
                      data-left-percent="${left}"
@@ -2325,6 +2339,8 @@ function generateTimeline(targetDateStr) {
     });
 
     html += '</div>';
+    // 影レイヤーに影要素を挿入
+    html = html.replace('<div class="timeline-bar-shadows"></div>', `<div class="timeline-bar-shadows">${shadowsHtml}</div>`);
     html += '</div>';
     html += '</div>';
 
@@ -2338,13 +2354,14 @@ function setupTimelineZoom() {
 
     const timelineScrollWrapper = timelineContainer.querySelector('.timeline-container-scroll');
     const timelineContent = timelineContainer.querySelector('.timeline-bars');
+    const timelineShadows = timelineContainer.querySelector('.timeline-bar-shadows');
     const timelineHours = timelineContainer.querySelector('.timeline-hours');
     if (!timelineScrollWrapper || !timelineContent || !timelineHours) return;
 
     // 初期ズームレベルを適用（少し遅延させて、レイアウトが確定してから実行）
     // これにより、正しい幅を取得できる
     setTimeout(() => {
-        applyTimelineZoom(timelineScrollWrapper, timelineContent, timelineHours, timelineZoomLevel);
+        applyTimelineZoom(timelineScrollWrapper, timelineContent, timelineShadows, timelineHours, timelineZoomLevel);
     }, 10);
 
     // ドラッグでスクロールする機能
@@ -2415,7 +2432,8 @@ function setupTimelineZoom() {
 
         // ズームレベルを更新
         timelineZoomLevel = newZoomLevel;
-        applyTimelineZoom(timelineScrollWrapper, timelineContent, timelineHours, timelineZoomLevel, containerWidth);
+        const shadowsElement = timelineScrollWrapper.querySelector('.timeline-bar-shadows');
+        applyTimelineZoom(timelineScrollWrapper, timelineContent, shadowsElement, timelineHours, timelineZoomLevel, containerWidth);
 
         // ズーム後のコンテンツ幅
         const newContentWidth = containerWidth * timelineZoomLevel;
@@ -2432,7 +2450,7 @@ function setupTimelineZoom() {
 }
 
 // タイムテーブルにズームを適用
-function applyTimelineZoom(scrollWrapperElement, contentElement, hoursElement, zoomLevel, baseWidth = null) {
+function applyTimelineZoom(scrollWrapperElement, contentElement, shadowsElement, hoursElement, zoomLevel, baseWidth = null) {
     if (!contentElement || !hoursElement || !scrollWrapperElement) return;
 
     // スクロールラッパーの実際の幅を取得
@@ -2454,6 +2472,9 @@ function applyTimelineZoom(scrollWrapperElement, contentElement, hoursElement, z
     // widthを直接設定することで、親要素のサイズに影響を与えない
     contentElement.style.width = `${scaledWidth}px`;
     hoursElement.style.width = `${scaledWidth}px`;
+    if (shadowsElement) {
+        shadowsElement.style.width = `${scaledWidth}px`;
+    }
 
     // transformは使わない（フォントの縦長化を防ぐ）
     contentElement.style.transform = 'none';
@@ -2474,6 +2495,19 @@ function applyTimelineZoom(scrollWrapperElement, contentElement, hoursElement, z
         barEl.style.left = `${(leftPercent / 100) * scaledWidth}px`;
         barEl.style.width = `${(widthPercent / 100) * scaledWidth}px`;
     });
+
+    // 各影要素の位置と幅を再計算（パーセンテージからpxに変換）
+    if (shadowsElement) {
+        const shadowElements = shadowsElement.querySelectorAll('.timeline-bar-shadow');
+        shadowElements.forEach(shadowEl => {
+            const leftPercent = parseFloat(shadowEl.getAttribute('data-left-percent'));
+            const widthPercent = parseFloat(shadowEl.getAttribute('data-width-percent'));
+            const top = shadowEl.getAttribute('data-top') || '0';
+            shadowEl.style.left = `${(leftPercent / 100) * scaledWidth}px`;
+            shadowEl.style.width = `${(widthPercent / 100) * scaledWidth}px`;
+            shadowEl.style.top = `${top}px`;
+        });
+    }
 }
 
 // 時刻文字列（HH:MM:SS または HH:MM）を秒数に変換
