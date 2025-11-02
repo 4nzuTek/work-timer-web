@@ -785,46 +785,46 @@ header h1 {
     min-height: 0;
 }
 
+.statistics-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
 .statistics-section h2 {
     color: #e0e0e0;
     font-size: 22px;
     font-weight: 600;
-    margin-bottom: 20px;
+    margin: 0;
 }
 
-.statistics-period-selector {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 20px;
-}
-
-.period-btn {
-    flex: 1;
-    padding: 8px 16px;
-    border: 1px solid #555;
-    background-color: #333;
+.statistics-period-select {
+    padding: 6px 12px;
+    border: 1px solid #3a3a4e;
+    background-color: #2a2a3e;
     color: #e0e0e0;
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s ease;
+    outline: none;
 }
 
-.period-btn:hover {
-    background-color: #444;
-    border-color: #666;
+.statistics-period-select:hover {
+    background-color: #3a3a4e;
+    border-color: #4a4a5e;
 }
 
-.period-btn.active {
-    background-color: #4a9eff;
-    border-color: #4a9eff;
-    color: white;
+.statistics-period-select:focus {
+    border-color: #7c8aff;
+    box-shadow: 0 0 0 2px rgba(124, 138, 255, 0.2);
 }
 
-.period-btn.active:hover {
-    background-color: #3a8eef;
-    border-color: #3a8eef;
+.statistics-period-select option {
+    background-color: #2a2a3e;
+    color: #e0e0e0;
 }
 
 .statistics-content {
@@ -847,10 +847,23 @@ header h1 {
     margin-bottom: 24px;
 }
 
+.statistics-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
 .statistics-label {
     font-size: 14px;
     color: #aaa;
-    margin-bottom: 8px;
+}
+
+.statistics-period-info {
+    font-size: 12px;
+    color: #aaa;
+    text-align: right;
+    line-height: 1.4;
 }
 
 .statistics-value {
@@ -1635,6 +1648,26 @@ body:not(.timer-running) .records-list::-webkit-scrollbar-thumb:hover {
 body:not(.timer-running) .voice-interval-input {
     background-color: #3a3a3a;
     border-color: #555;
+}
+
+/* タイマー停止中：統計期間選択プルダウンをグレースケールに */
+body:not(.timer-running) .statistics-period-select {
+    background-color: #3a3a3a;
+    border-color: #555;
+}
+
+/* タイマー停止中：統計期間情報をグレースケールに */
+body:not(.timer-running) .statistics-period-info {
+    color: #888;
+}
+
+body:not(.timer-running) .statistics-period-select:hover {
+    background-color: #4a4a4a;
+    border-color: #666;
+}
+
+body:not(.timer-running) .statistics-period-select option {
+    background-color: #3a3a3a;
 }
 
 /* モーダルダイアログ */

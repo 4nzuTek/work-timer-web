@@ -2031,17 +2031,15 @@ if (importFileInput) {
     importFileInput.addEventListener('change', handleImportFile);
 }
 
-// 統計期間切り替えボタンのイベントリスナー
-document.querySelectorAll('.period-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        // アクティブ状態を更新
-        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-
-        statisticsPeriod = e.target.dataset.period;
+// 統計期間切り替えプルダウンのイベントリスナー
+const statisticsPeriodSelect = document.getElementById('statisticsPeriodSelect');
+if (statisticsPeriodSelect) {
+    statisticsPeriodSelect.value = statisticsPeriod; // 初期値を設定
+    statisticsPeriodSelect.addEventListener('change', (e) => {
+        statisticsPeriod = e.target.value;
         updateStatistics();
     });
-});
+}
 
 // 統計を更新
 function updateStatistics() {
@@ -2068,9 +2066,15 @@ function updateStatistics() {
     // タグごとの作業時間を計算
     const tagStatistics = calculateTagStatistics(filteredRecords);
 
+    // 期間情報を取得
+    const periodInfo = getPeriodInfo(statisticsPeriod, records, filteredRecords);
+
     // HTMLを生成
     let html = `<div class="statistics-total">
-        <div class="statistics-label">総作業時間</div>
+        <div class="statistics-label-row">
+            <div class="statistics-label">総作業時間</div>
+            <div class="statistics-period-info">${periodInfo}</div>
+        </div>
         <div class="statistics-value">${formatDurationWithSeconds(totalSeconds)}</div>
     </div>`;
 
@@ -2401,34 +2405,88 @@ function getTagColor(tag) {
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
-// 期間に応じて記録をフィルタリング
+// 期間情報を取得（表示用の文字列を返す）
+function getPeriodInfo(period, allRecords, filteredRecords) {
+    if (filteredRecords.length === 0) {
+        return '';
+    }
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    switch (period) {
+        case 'all':
+            return '全期間';
+        case 'month': {
+            // 今月の1日
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            // 今月の最終日（次月の1日の前日）
+            const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            const year1 = firstDayOfMonth.getFullYear();
+            const month1 = firstDayOfMonth.getMonth() + 1;
+            const day1 = firstDayOfMonth.getDate();
+            const year2 = lastDayOfMonth.getFullYear();
+            const month2 = lastDayOfMonth.getMonth() + 1;
+            const day2 = lastDayOfMonth.getDate();
+            return `${year1}年${month1}月${day1}日～${year2}年${month2}月${day2}日`;
+        }
+        case 'week': {
+            // 本日を含む週の日曜日を計算
+            const sunday = new Date(now);
+            const dayOfWeek = now.getDay(); // 0 = 日曜日, 1 = 月曜日, ...
+            sunday.setDate(now.getDate() - dayOfWeek);
+            sunday.setHours(0, 0, 0, 0);
+            // 本日を含む週の土曜日を計算
+            const saturday = new Date(sunday);
+            saturday.setDate(sunday.getDate() + 6);
+            saturday.setHours(0, 0, 0, 0);
+            const year1 = sunday.getFullYear();
+            const month1 = sunday.getMonth() + 1;
+            const day1 = sunday.getDate();
+            const year2 = saturday.getFullYear();
+            const month2 = saturday.getMonth() + 1;
+            const day2 = saturday.getDate();
+            return `${year1}年${month1}月${day1}日～${year2}年${month2}月${day2}日`;
+        }
+        default:
+            return '';
+    }
+}
+
 function filterRecordsByPeriod(records, period) {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
 
     switch (period) {
         case 'week': {
-            // 今週の月曜日を計算
-            const monday = new Date(now);
-            const dayOfWeek = now.getDay();
-            const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 日曜日は6、月曜日は0
-            monday.setDate(now.getDate() - diff);
-            monday.setHours(0, 0, 0, 0);
+            // 本日を含む週の日曜日を計算
+            const sunday = new Date(now);
+            const dayOfWeek = now.getDay(); // 0 = 日曜日, 1 = 月曜日, ...
+            sunday.setDate(now.getDate() - dayOfWeek);
+            sunday.setHours(0, 0, 0, 0);
+            // 本日を含む週の土曜日を計算
+            const saturday = new Date(sunday);
+            saturday.setDate(sunday.getDate() + 6);
+            saturday.setHours(0, 0, 0, 0);
 
             return records.filter(record => {
                 const recordDate = new Date(record.date);
                 recordDate.setHours(0, 0, 0, 0);
-                return recordDate >= monday;
+                return recordDate >= sunday && recordDate <= saturday;
             });
         }
         case 'month': {
             // 今月の1日
             const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            firstDayOfMonth.setHours(0, 0, 0, 0);
+            // 今月の最終日（次月の1日の前日）
+            const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            lastDayOfMonth.setHours(0, 0, 0, 0);
 
             return records.filter(record => {
                 const recordDate = new Date(record.date);
                 recordDate.setHours(0, 0, 0, 0);
-                return recordDate >= firstDayOfMonth;
+                return recordDate >= firstDayOfMonth && recordDate <= lastDayOfMonth;
             });
         }
         case 'all':
