@@ -956,8 +956,13 @@ header h1 {
     font-size: 14px;
     color: #7c8aff;
     font-weight: 600;
-    min-width: 80px;
+    width: 100px;
+    /* 固定幅にして右端を揃える */
     text-align: right;
+    flex-shrink: 0;
+    /* 縮小しない */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* 今日の作業記録タイムテーブル */
