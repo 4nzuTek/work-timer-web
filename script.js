@@ -389,6 +389,27 @@ function formatDurationWithSeconds(totalSeconds) {
     }
 }
 
+// スクロール位置を保持するユーティリティ関数
+function preserveScrollPosition(callback) {
+    // ページ上部からの現在のスクロール位置を保存
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+    // コールバック実行
+    callback();
+
+    // DOM更新後に同じスクロール位置（ページ上部からの高さ）を復元
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            // 新しいページ高さを考慮して、保存したスクロール位置に戻す
+            // ただし、新しいページが短くなった場合は最大スクロール位置に制限
+            const newDocumentHeight = document.documentElement.scrollHeight;
+            const maxScrollTop = Math.max(0, newDocumentHeight - window.innerHeight);
+            const targetScrollTop = Math.min(scrollTop, maxScrollTop);
+            window.scrollTo(0, targetScrollTop);
+        });
+    });
+}
+
 // 記録を作成して保存（エンドボイス再生なし）
 function saveRecordWithoutEndVoice() {
     if (recordStartTime === null || elapsedTime === 0) {
@@ -430,22 +451,25 @@ function saveRecordWithoutEndVoice() {
     // ローカルストレージに保存
     localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
 
-    // 記録一覧を更新
-    if (selectedDate) {
-        // 選択中の日付がある場合はその日の記録を表示
-        displayRecords(selectedDate);
-    } else {
-        displayRecords();
-    }
+    // スクロール位置を保持しながら更新
+    preserveScrollPosition(() => {
+        // 記録一覧を更新
+        if (selectedDate) {
+            // 選択中の日付がある場合はその日の記録を表示
+            displayRecords(selectedDate);
+        } else {
+            displayRecords();
+        }
 
-    // カレンダーを更新（記録がある日のマーカーを更新するため）
-    renderCalendar();
+        // カレンダーを更新（記録がある日のマーカーを更新するため）
+        renderCalendar();
 
-    // 統計を更新
-    updateStatistics();
+        // 統計を更新
+        updateStatistics();
 
-    // タイムテーブルを更新
-    updateTimeline();
+        // タイムテーブルを更新
+        updateTimeline();
+    });
 
     // タグと作業内容はリセットしない（次の作業でも使えるように保持）
     // 直近のタイマー設定を保存（作業内容とタグ選択を保持）
@@ -1539,11 +1563,7 @@ function renderCalendar() {
         const prevMonthLastDay = new Date(year, month, 0).getDate();
         for (let i = firstDayOfWeek - 1; i >= 0; i--) {
             const day = prevMonthLastDay - i;
-            const date = new Date(year, month - 1, day);
-            const dayOfWeek = date.getDay(); // 0=日曜日, 6=土曜日
             let classes = 'calendar-day calendar-day-other';
-            if (dayOfWeek === 0) classes += ' calendar-day-sunday'; // 日曜日
-            if (dayOfWeek === 6) classes += ' calendar-day-saturday'; // 土曜日
             calendarHTML += `<div class="${classes}">${day}</div>`;
         }
     }
@@ -1604,27 +1624,33 @@ function renderCalendar() {
 // 日付を選択
 function selectDate(dateStr) {
     selectedDate = dateStr;
-    renderCalendar();
-    displayRecords(dateStr);
-    updateTimeline(); // タイムテーブルも更新
+    preserveScrollPosition(() => {
+        renderCalendar();
+        displayRecords(dateStr);
+        updateTimeline(); // タイムテーブルも更新
+    });
 }
 
 // 前月に移動
 function goToPrevMonth() {
     currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
     selectedDate = null; // 日付選択をリセット
-    renderCalendar();
-    displayRecords(); // 記録一覧をリセット
-    updateTimeline(); // タイムテーブルも更新（今日の記録を表示）
+    preserveScrollPosition(() => {
+        renderCalendar();
+        displayRecords(); // 記録一覧をリセット
+        updateTimeline(); // タイムテーブルも更新（今日の記録を表示）
+    });
 }
 
 // 次月に移動
 function goToNextMonth() {
     currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
     selectedDate = null; // 日付選択をリセット
-    renderCalendar();
-    displayRecords(); // 記録一覧をリセット
-    updateTimeline(); // タイムテーブルも更新（今日の記録を表示）
+    preserveScrollPosition(() => {
+        renderCalendar();
+        displayRecords(); // 記録一覧をリセット
+        updateTimeline(); // タイムテーブルも更新（今日の記録を表示）
+    });
 }
 
 // 作業内容入力欄の状態を更新
@@ -1953,14 +1979,17 @@ function deleteRecord(recordId) {
     const filteredRecords = records.filter(record => record.id !== recordId);
     localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(filteredRecords));
 
-    // 記録一覧とカレンダーを更新
-    if (selectedDate) {
-        displayRecords(selectedDate);
-    } else {
-        displayRecords();
-    }
-    renderCalendar();
-    updateStatistics(); // 統計を更新
+    // スクロール位置を保持しながら更新
+    preserveScrollPosition(() => {
+        // 記録一覧とカレンダーを更新
+        if (selectedDate) {
+            displayRecords(selectedDate);
+        } else {
+            displayRecords();
+        }
+        renderCalendar();
+        updateStatistics(); // 統計を更新
+    });
 }
 
 // 記録削除処理
@@ -2313,14 +2342,17 @@ function saveEditedRecord(recordId) {
 
     localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
 
-    // 記録一覧とカレンダーを更新
-    if (selectedDate) {
-        displayRecords(selectedDate);
-    } else {
-        displayRecords();
-    }
-    renderCalendar();
-    updateStatistics(); // 統計を更新
+    // スクロール位置を保持しながら更新
+    preserveScrollPosition(() => {
+        // 記録一覧とカレンダーを更新
+        if (selectedDate) {
+            displayRecords(selectedDate);
+        } else {
+            displayRecords();
+        }
+        renderCalendar();
+        updateStatistics(); // 統計を更新
+    });
 }
 
 // グローバルスコープに公開（onchange/onclickから呼び出すため）
@@ -3364,7 +3396,11 @@ function initSkybox() {
         }
     );
 
-    // リサイズ処理
+    // リサイズ処理（デバウンス付き）
+    let resizeTimeout = null;
+    let lastWidth = 0;
+    let lastHeight = 0;
+
     function handleResize() {
         const container = canvas.parentElement;
         if (!container) return;
@@ -3372,12 +3408,37 @@ function initSkybox() {
         const width = container.clientWidth;
         const height = container.clientHeight;
 
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(width, height);
+        // 高さが増えた場合（下方向への拡張）のみ更新
+        // 幅が変わった場合も更新（ただしカクつきを防ぐためデバウンス）
+        const heightIncreased = height > lastHeight;
+        const widthChanged = Math.abs(width - lastWidth) > 1; // 1px以上の変化
+
+        if (heightIncreased || widthChanged || (lastWidth === 0 && lastHeight === 0)) {
+            lastWidth = width;
+            lastHeight = height;
+
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
     }
 
-    window.addEventListener('resize', handleResize);
+    function debouncedResize() {
+        if (resizeTimeout) {
+            clearTimeout(resizeTimeout);
+        }
+        resizeTimeout = setTimeout(() => {
+            handleResize();
+        }, 100); // 100msのデバウンス
+    }
+
+    window.addEventListener('resize', debouncedResize);
+
+    // ResizeObserverでコンテナのサイズ変更を監視（コンテンツの高さ変化にも対応）
+    const resizeObserver = new ResizeObserver(() => {
+        debouncedResize();
+    });
+    resizeObserver.observe(container);
 
     // 初回リサイズ
     handleResize();

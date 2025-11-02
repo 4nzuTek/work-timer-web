@@ -250,23 +250,20 @@ header h1 {
 .left-panel {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 0px;
     position: absolute;
     /* .main-layoutに対して絶対配置（スクロールに追従しない） */
     left: 0px;
     /* グリッドの左側に配置（450px幅 + 30px gap） */
     top: 0;
     width: 450px;
-    height: calc(100vh - 140px);
-    max-height: calc(100vh - 140px);
-    overflow-y: auto;
-    /* 必要な時だけスクロールバーを表示 */
-    overflow-x: hidden;
-    /* ダークモード用スクロールバー（Firefox） */
-    scrollbar-width: thin;
-    scrollbar-color: #4a4a5e #2a2a3e;
+    height: auto;
+    /* コンテンツに応じて高さが自動調整される */
+    min-height: calc(100vh - 140px);
+    /* 最小高さを確保（レイアウト崩れ防止） */
+    overflow: visible;
+    /* スクロールバーを削除し、コンテンツが下に増える形にする */
     z-index: 10;
-    /* 左パネルを独立したスクロール領域にする */
 }
 
 .left-panel::-webkit-scrollbar {
@@ -474,8 +471,7 @@ header h1 {
 }
 
 .tag-management-section {
-    border-top: 2px solid #3a3a4e;
-    padding-top: 20px;
+    padding-top: 10px;
 }
 
 .tag-management-section summary {
@@ -503,13 +499,13 @@ header h1 {
 .tag-management-section h2 {
     display: inline-block;
     color: #e0e0e0;
-    font-size: 22px;
+    font-size: 14px;
     font-weight: 600;
     margin: 0;
 }
 
 .tag-management-content {
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
 .tag-input-group {
@@ -1794,9 +1790,6 @@ body:not(.timer-running) .edit-tag-checkbox-label {
     background: #3a3a3a;
 }
 
-body:not(.timer-running) .tag-management-section {
-    border-top-color: #555;
-}
 
 body:not(.timer-running) .calendar-section {
     border-top-color: #555;
