@@ -394,19 +394,49 @@ function preserveScrollPosition(callback) {
     // ページ上部からの現在のスクロール位置を保存
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
+    // スクロール位置を固定するための一時的なスタイルを追加
+    const originalScrollBehavior = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = 'auto';
+    // スクロール位置を一時的に固定
+    document.documentElement.style.setProperty('scroll-snap-type', 'none', 'important');
+
+    // コールバック実行前にスクロール位置を確実に保存
+    let savedScrollTop = scrollTop;
+
     // コールバック実行
     callback();
 
-    // DOM更新後に同じスクロール位置（ページ上部からの高さ）を復元
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            // 新しいページ高さを考慮して、保存したスクロール位置に戻す
-            // ただし、新しいページが短くなった場合は最大スクロール位置に制限
-            const newDocumentHeight = document.documentElement.scrollHeight;
-            const maxScrollTop = Math.max(0, newDocumentHeight - window.innerHeight);
-            const targetScrollTop = Math.min(scrollTop, maxScrollTop);
-            window.scrollTo(0, targetScrollTop);
+    // 即座にスクロール位置を復元（requestAnimationFrameを使わずに）
+    // ただし、DOM更新を待つために最小限の遅延を設定
+    const restoreScroll = () => {
+        // 新しいページ高さを考慮して、保存したスクロール位置に戻す
+        // ただし、新しいページが短くなった場合は最大スクロール位置に制限
+        const newDocumentHeight = document.documentElement.scrollHeight;
+        const maxScrollTop = Math.max(0, newDocumentHeight - window.innerHeight);
+        const targetScrollTop = Math.min(savedScrollTop, maxScrollTop);
+        window.scrollTo({
+            top: targetScrollTop,
+            behavior: 'auto'
         });
+
+        // スクロール位置を再度確認して微調整（念のため）
+        requestAnimationFrame(() => {
+            const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if (Math.abs(currentScrollTop - targetScrollTop) > 1) {
+                window.scrollTo({
+                    top: targetScrollTop,
+                    behavior: 'auto'
+                });
+            }
+            // 元のスタイルを復元
+            document.documentElement.style.scrollBehavior = originalScrollBehavior;
+            document.documentElement.style.removeProperty('scroll-snap-type');
+        });
+    };
+
+    // 即座に実行を試みるが、DOM更新を待つために最小限のフレーム待機
+    requestAnimationFrame(() => {
+        restoreScroll();
     });
 }
 
@@ -1747,6 +1777,56 @@ function toggleTag(tagName) {
     saveLastTimerSettings();
 }
 
+// 左パネルの高さを取得して.main-layoutの高さを調整
+function adjustMainLayoutHeight() {
+    const leftPanel = document.querySelector('.left-panel');
+    const mainLayout = document.querySelector('.main-layout');
+    if (!leftPanel || !mainLayout) return;
+
+    // 左パネルの実際の高さを取得（offsetHeightを使用）
+    const leftPanelHeight = leftPanel.offsetHeight;
+
+    // .main-layoutの最小高さを左パネルの高さに設定
+    // ただし、元の最小高さより小さい場合は維持
+    const minHeight = Math.max(leftPanelHeight, window.innerHeight - 140);
+    mainLayout.style.minHeight = `${minHeight}px`;
+}
+
+// スクロール位置を維持しながら左パネルの高さを調整
+function adjustMainLayoutHeightWithScrollPreserve() {
+    // スクロール位置を保存
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+    // 高さを調整
+    adjustMainLayoutHeight();
+
+    // 高さ変更によるレイアウトシフトを防ぐため、即座にスクロール位置を復元
+    // レイアウト更新を待つためにrequestAnimationFrameを使用
+    requestAnimationFrame(() => {
+        // 新しいページ高さを考慮
+        const newDocumentHeight = document.documentElement.scrollHeight;
+        const maxScrollTop = Math.max(0, newDocumentHeight - window.innerHeight);
+        const targetScrollTop = Math.min(scrollTop, maxScrollTop);
+
+        // スクロール位置を復元（behavior: 'auto'で即座に）
+        window.scrollTo({
+            top: targetScrollTop,
+            behavior: 'auto'
+        });
+
+        // 念のため、もう1フレーム後に確認して微調整
+        requestAnimationFrame(() => {
+            const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if (Math.abs(currentScrollTop - targetScrollTop) > 1) {
+                window.scrollTo({
+                    top: targetScrollTop,
+                    behavior: 'auto'
+                });
+            }
+        });
+    });
+}
+
 // タグ一覧を表示
 function displayTags() {
     const tagListContainer = document.getElementById('tagList');
@@ -1786,6 +1866,11 @@ function displayTags() {
             handleDeleteTag(tagName);
         });
     });
+
+    // 高さを調整（少し遅延させてDOMの更新を待つ、スクロール位置を維持）
+    setTimeout(() => {
+        adjustMainLayoutHeightWithScrollPreserve();
+    }, 0);
 }
 
 // タグ削除処理
@@ -1794,6 +1879,10 @@ function handleDeleteTag(tagName) {
         deleteTag(tagName);
         displayTags();
         updateTagCheckboxes();
+        // displayTags内でadjustMainLayoutHeightが呼ばれるが、念のため再度呼ぶ（スクロール位置を維持）
+        setTimeout(() => {
+            adjustMainLayoutHeightWithScrollPreserve();
+        }, 0);
     }
 }
 
@@ -1853,6 +1942,10 @@ function startEditTag(tagName) {
 // タグの編集をキャンセル
 function cancelEditTag(tagName) {
     displayTags();
+    // displayTags内でadjustMainLayoutHeightが呼ばれるが、念のため再度呼ぶ（スクロール位置を維持）
+    setTimeout(() => {
+        adjustMainLayoutHeightWithScrollPreserve();
+    }, 0);
 }
 
 // タグ名を更新（記録内のタグも更新）
@@ -1965,6 +2058,10 @@ function saveEditedTag(oldTagName) {
         // 更新成功
         displayTags();
         updateTagCheckboxes();
+        // displayTags内でadjustMainLayoutHeightが呼ばれるが、念のため再度呼ぶ（スクロール位置を維持）
+        setTimeout(() => {
+            adjustMainLayoutHeightWithScrollPreserve();
+        }, 0);
     } else {
         // 更新失敗（エラーメッセージは updateTagName 内で表示済み）
         // 入力フィールドにフォーカスを戻す
@@ -2380,6 +2477,10 @@ function handleAddTag() {
         tagInput.value = '';
         displayTags();
         updateTagCheckboxes();
+        // displayTags内でadjustMainLayoutHeightが呼ばれるが、念のため再度呼ぶ（スクロール位置を維持）
+        setTimeout(() => {
+            adjustMainLayoutHeightWithScrollPreserve();
+        }, 0);
     } else {
         alert('このタグは既に登録されています');
     }
@@ -2507,6 +2608,21 @@ loadLastTimerSettings(); // 直近のタイマー設定を復元（updateTagChec
 updateStatistics(); // 統計を表示
 updateTimeline(); // タイムテーブルを表示
 adjustRightPanelHeight(); // 右パネルの高さをカレンダーに合わせる
+// 左パネルの高さを反映して.main-layoutの高さを調整
+setTimeout(() => {
+    adjustMainLayoutHeight();
+}, 0);
+
+// タグ管理セクションの開閉時に高さを調整（スクロール位置を維持）
+const tagManagementSection = document.querySelector('.tag-management-section');
+if (tagManagementSection) {
+    tagManagementSection.addEventListener('toggle', () => {
+        // 開閉のアニメーションを待つため、少し遅延させる
+        setTimeout(() => {
+            adjustMainLayoutHeightWithScrollPreserve();
+        }, 100);
+    });
+}
 
 // エクスポート/インポートボタンのイベントリスナー
 const exportBtn = document.getElementById('exportBtn');
