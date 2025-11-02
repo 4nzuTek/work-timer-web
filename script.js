@@ -2305,8 +2305,8 @@ function generateTimeline(targetDateStr) {
             const left = (startTime / (24 * 60 * 60)) * 100;
             const width = ((endTime - startTime) / (24 * 60 * 60)) * 100;
 
-            // タグがあれば色分け（最初のタグを使用）
-            const tagColor = record.tags && record.tags.length > 0 ? getTagColor(record.tags[0]) : '#7c8aff';
+            // 全てのイベントを削除ボタンと同じ色に
+            const tagColor = '#f07282';
 
             // 作業内容があればツールチップに表示
             const tooltip = record.description ?

@@ -1151,6 +1151,21 @@ header h1 {
     filter: blur(20px);
 }
 
+.timeline-background::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    /* min-widthはJavaScriptで動的に設定されるため、親要素の幅に合わせる */
+    pointer-events: none;
+    /* グラデーション背景の上に重ねる色フィルター */
+    background: rgba(139, 72, 81, 0.308);
+    /* グラデーション背景より上に表示 */
+    z-index: 1;
+}
+
 .timeline-hours {
     position: relative;
     height: 20px;
