@@ -694,7 +694,7 @@ header h1 {
     color: #e0e0e0;
 }
 
-.calendar-day:hover:not(.calendar-day-other) {
+.calendar-day:hover:not(.calendar-day-other):not(.calendar-day-selected):not(.calendar-day-today) {
     background: #3a3a4e;
     transform: scale(1.05);
 }
@@ -853,7 +853,7 @@ header h1 {
 .statistics-value {
     font-size: 24px;
     font-weight: 600;
-    color: #7c8aff;
+    color: #ffffff;
 }
 
 .statistics-tags-title {
@@ -1158,7 +1158,7 @@ header h1 {
 
 .record-date {
     font-weight: 600;
-    color: #7c8aff;
+    color: #ffffff;
     font-size: 14px;
     margin-bottom: 4px;
 }
@@ -1457,6 +1457,137 @@ header h1 {
         height: 4px;
         bottom: 2px;
     }
+}
+
+/* タイマー停止中：ボタン以外の背景要素をグレーに */
+body:not(.timer-running) .tag-item {
+    background: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .tag-checkboxes {
+    background: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .record-item {
+    background: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .calendar-container {
+    background: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .description-input {
+    background-color: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .tag-input {
+    background-color: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .statistics-total {
+    background: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .statistics-tag-bar-container {
+    background-color: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .edit-tag-checkboxes {
+    background: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .calendar-day {
+    background: #2e2e2e;
+    border-color: #555;
+}
+
+body:not(.timer-running) .calendar-day:hover:not(.calendar-day-other):not(.calendar-day-selected):not(.calendar-day-today) {
+    background: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .calendar-day-today {
+    background: linear-gradient(135deg, #7c8aff 0%, #9d7fff 100%);
+    border-color: transparent;
+    color: white;
+}
+
+body:not(.timer-running) .calendar-day-selected:not(.calendar-day-today) {
+    background: #555555;
+    border-color: #aaaaaa;
+    color: white;
+}
+
+body:not(.timer-running) .calendar-day-selected.calendar-day-today {
+    background: linear-gradient(135deg, #6c78ef 0%, #8d6fff 100%);
+    border-color: #7c8aff;
+    color: white;
+}
+
+body:not(.timer-running) .tag-checkbox-label {
+    background: #3a3a3a;
+}
+
+body:not(.timer-running) .tag-checkbox-label:hover {
+    background: #4a4a4a;
+}
+
+body:not(.timer-running) .tag-edit-input {
+    background: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .edit-date-input,
+body:not(.timer-running) .edit-time-input,
+body:not(.timer-running) .edit-description-input {
+    background-color: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .edit-tag-checkbox-label {
+    background: #3a3a3a;
+}
+
+body:not(.timer-running) .tag-management-section {
+    border-top-color: #555;
+}
+
+body:not(.timer-running) .calendar-section {
+    border-top-color: #555;
+}
+
+body:not(.timer-running) .records-section {
+    border-top-color: #555;
+}
+
+body:not(.timer-running) .statistics-section {
+    border-top-color: #555;
+}
+
+body:not(.timer-running) .timeline-section {
+    border-top-color: #555;
+}
+
+body:not(.timer-running) .timeline-empty {
+    border-top-color: #555;
+}
+
+body:not(.timer-running) .timeline-container {
+    background-color: #3a3a3a;
+    border-color: #555;
+}
+
+body:not(.timer-running) .statistics-tag-value {
+    color: #ffffff;
 }
 
 /* モーダルダイアログ */
