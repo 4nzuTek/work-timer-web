@@ -3879,6 +3879,28 @@ function initZundaDraggable() {
     });
 }
 
+// フルスクリーン状態を監視してスクロールバーの表示を制御
+function updateScrollbarVisibility() {
+    const isFullscreen = !!document.fullscreenElement || !!document.webkitFullscreenElement ||
+        !!document.mozFullScreenElement || !!document.msFullscreenElement;
+
+    if (isFullscreen) {
+        // フルスクリーン時はスクロールバーを非表示
+        document.documentElement.classList.remove('not-fullscreen');
+        document.body.classList.remove('not-fullscreen');
+    } else {
+        // フルスクリーンでない時はスクロールバーを表示
+        document.documentElement.classList.add('not-fullscreen');
+        document.body.classList.add('not-fullscreen');
+    }
+}
+
+// フルスクリーンイベントを監視
+document.addEventListener('fullscreenchange', updateScrollbarVisibility);
+document.addEventListener('webkitfullscreenchange', updateScrollbarVisibility);
+document.addEventListener('mozfullscreenchange', updateScrollbarVisibility);
+document.addEventListener('MSFullscreenChange', updateScrollbarVisibility);
+
 // ページ読み込み時にずんだもんのドラッグ機能を初期化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
@@ -3886,10 +3908,12 @@ if (document.readyState === 'loading') {
         updateZundaGrayscale(); // 初期状態のグレースケールを設定
         updateZundaDirection(false); // 初期状態の向きを設定（アニメーションなし）
         updateZundaVisibility(); // 初期状態のずんだもんの表示/非表示を設定
+        updateScrollbarVisibility(); // 初期状態のスクロールバー表示を設定
     });
 } else {
     initZundaDraggable();
     updateZundaGrayscale(); // 初期状態のグレースケールを設定
     updateZundaDirection(); // 初期状態の向きを設定
     updateZundaVisibility(); // 初期状態のずんだもんの表示/非表示を設定
+    updateScrollbarVisibility(); // 初期状態のスクロールバー表示を設定
 }
