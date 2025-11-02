@@ -3454,7 +3454,7 @@ function initSkybox() {
 
     // エクイレクタングラー形式のテクスチャを読み込む
     const loader = new THREE.TextureLoader();
-    const imagePath = 'image/M3_Photoreal_equirectangular-jpg_wide_open_plaza_in_847306475_455207.jpg';
+    const imagePath = 'image/bg.jpg';
     console.log('Loading texture from:', imagePath);
 
     let sphereMesh = null;
