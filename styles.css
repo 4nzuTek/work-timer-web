@@ -1999,3 +1999,146 @@ body:not(.timer-running) .statistics-period-select option {
     background-color: #444;
     border-color: #666;
 }
+
+/* ずんだもん画像（ドラッグ可能） */
+.zunda-draggable {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 160px;
+    height: auto;
+    cursor: move;
+    z-index: 9999;
+    user-select: none;
+    pointer-events: auto;
+    transition: opacity 0.3s ease, filter 0.3s ease, transform 0.3s ease;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+}
+
+.zunda-draggable:hover {
+    opacity: 0.9;
+}
+
+.zunda-draggable:active {
+    cursor: grabbing;
+    opacity: 0.8;
+}
+
+.zunda-draggable.grayscale {
+    filter: grayscale(100%);
+    opacity: 0.5;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+.zunda-draggable.grayscale:hover {
+    opacity: 0.6;
+}
+
+.zunda-draggable.grayscale:active {
+    opacity: 0.55;
+}
+
+.zunda-draggable.flipped {
+    transform: scaleX(-1);
+}
+
+.zunda-draggable.flipping-to-flipped {
+    animation: flipToFlipped 0.15s ease-in-out forwards;
+}
+
+.zunda-draggable.flipping-to-normal {
+    animation: flipToNormal 0.15s ease-in-out forwards;
+}
+
+.zunda-draggable.voice-muted {
+    opacity: 0;
+    pointer-events: none;
+}
+
+@keyframes flipToFlipped {
+    0% {
+        transform: scaleX(1);
+    }
+
+    11.11% {
+        transform: scaleX(0.78);
+    }
+
+    22.22% {
+        transform: scaleX(0.56);
+    }
+
+    33.33% {
+        transform: scaleX(0.33);
+    }
+
+    44.44% {
+        transform: scaleX(0.11);
+    }
+
+    55.55% {
+        transform: scaleX(-0.11);
+    }
+
+    66.66% {
+        transform: scaleX(-0.33);
+    }
+
+    77.77% {
+        transform: scaleX(-0.56);
+    }
+
+    88.88% {
+        transform: scaleX(-0.78);
+    }
+
+    100% {
+        transform: scaleX(-1);
+    }
+}
+
+@keyframes flipToNormal {
+    0% {
+        transform: scaleX(-1);
+    }
+
+    11.11% {
+        transform: scaleX(-0.78);
+    }
+
+    22.22% {
+        transform: scaleX(-0.56);
+    }
+
+    33.33% {
+        transform: scaleX(-0.33);
+    }
+
+    44.44% {
+        transform: scaleX(-0.11);
+    }
+
+    55.55% {
+        transform: scaleX(0.11);
+    }
+
+    66.66% {
+        transform: scaleX(0.33);
+    }
+
+    77.77% {
+        transform: scaleX(0.56);
+    }
+
+    88.88% {
+        transform: scaleX(0.78);
+    }
+
+    100% {
+        transform: scaleX(1);
+    }
+}

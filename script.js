@@ -13,6 +13,7 @@ let bgmMuted = false; // BGMミュート状態
 let voiceMuted = false; // ボイスミュート状態
 let bgmVolumeBeforeMute = 50; // ミュート前のBGM音量
 let voiceVolumeBeforeMute = 50; // ミュート前のボイス音量
+let zundaImageTimeout = null; // ずんだもん画像切り替え用のタイマー
 
 // カレンダーの状態管理
 let currentCalendarDate = new Date(); // カレンダーで表示している年月
@@ -37,6 +38,7 @@ const STORAGE_KEY_BGM_MUTED = 'workingTimer_bgm_muted';
 const STORAGE_KEY_VOICE_MUTED = 'workingTimer_voice_muted';
 const STORAGE_KEY_LAST_DESCRIPTION = 'workingTimer_last_description';
 const STORAGE_KEY_LAST_SELECTED_TAGS = 'workingTimer_last_selected_tags';
+const STORAGE_KEY_ZUNDA_POSITION = 'workingTimer_zunda_position';
 
 // ボイスファイルのリスト（動的に読み込む）
 let CHEER_VOICE_FILES = [];
@@ -531,6 +533,124 @@ function stopBGM() {
     }
 }
 
+// ずんだもん画像を話している画像に切り替え
+function switchToSpeakImage() {
+    const zundaImage = document.getElementById('zundaImage');
+    if (!zundaImage) return;
+
+    // 既存のタイマーがあればクリア
+    if (zundaImageTimeout) {
+        clearTimeout(zundaImageTimeout);
+        zundaImageTimeout = null;
+    }
+
+    // 画像を話している状態に切り替え
+    zundaImage.src = 'image/zunda_speak.png';
+}
+
+// ずんだもん画像を通常の画像に戻す
+function switchToNormalImage() {
+    const zundaImage = document.getElementById('zundaImage');
+    if (!zundaImage) return;
+
+    // 既存のタイマーがあればクリア
+    if (zundaImageTimeout) {
+        clearTimeout(zundaImageTimeout);
+        zundaImageTimeout = null;
+    }
+
+    // 画像を通常の状態に戻す
+    zundaImage.src = 'image/zunda_normal.png';
+}
+
+// ボイスが再生中かどうかをチェック
+function isVoicePlaying() {
+    return voiceAudio && !voiceAudio.paused && !voiceAudio.ended;
+}
+
+// ずんだもん画像のグレースケールを更新
+function updateZundaGrayscale() {
+    const zundaImage = document.getElementById('zundaImage');
+    if (!zundaImage) return;
+
+    if (isRunning) {
+        // タイマー実行中はカラー
+        zundaImage.classList.remove('grayscale');
+    } else {
+        // タイマー停止中はグレースケール
+        zundaImage.classList.add('grayscale');
+    }
+}
+
+// ずんだもん画像の表示/非表示を更新（ボイスミュート状態に応じて）
+function updateZundaVisibility() {
+    const zundaImage = document.getElementById('zundaImage');
+    if (!zundaImage) return;
+
+    if (voiceMuted) {
+        zundaImage.classList.add('voice-muted');
+    } else {
+        zundaImage.classList.remove('voice-muted');
+    }
+}
+
+// ずんだもん画像の向きを更新（画面の中心を向くように）
+function updateZundaDirection(animateFlip = false) {
+    const zundaImage = document.getElementById('zundaImage');
+    if (!zundaImage) return;
+
+    const rect = zundaImage.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const screenCenter = window.innerWidth / 2;
+
+    const shouldFlip = centerX < screenCenter;
+    const currentDirection = shouldFlip ? 'left' : 'right';
+
+    // 方向が変わった場合のみ処理（アニメーションが必要な場合）
+    if (animateFlip && lastDirection !== null && lastDirection !== currentDirection) {
+        // 現在の反転状態を確認
+        const currentlyFlipped = zundaImage.classList.contains('flipped');
+
+        // 既存のアニメーションクラスをクリア
+        zundaImage.classList.remove('flipping-to-flipped', 'flipping-to-normal');
+
+        // 紙がめくれるアニメーション: 10段階で変化
+        // 反転状態から通常状態へ、または通常状態から反転状態へ
+        if (shouldFlip && !currentlyFlipped) {
+            // 通常から反転へ
+            // アニメーションクラスを先に追加してから.flippedを削除
+            zundaImage.classList.add('flipping-to-flipped');
+            zundaImage.classList.remove('flipped');
+        } else if (!shouldFlip && currentlyFlipped) {
+            // 反転から通常へ
+            // アニメーションクラスを追加（.flippedは残したまま）
+            zundaImage.classList.add('flipping-to-normal');
+            // 強制的に再描画をトリガーしてアニメーションを開始
+            void zundaImage.offsetHeight; // reflowをトリガー
+        }
+
+        // アニメーション完了後に反転状態を適用
+        setTimeout(() => {
+            zundaImage.classList.remove('flipping-to-flipped', 'flipping-to-normal');
+            // アニメーション完了後に.flippedクラスを更新
+            if (shouldFlip) {
+                zundaImage.classList.add('flipped');
+            } else {
+                zundaImage.classList.remove('flipped');
+            }
+            lastDirection = currentDirection;
+        }, 150); // animationの時間に合わせる（0.15s）
+    } else {
+        // 通常の切り替え（アニメーションなし）
+        if (shouldFlip) {
+            zundaImage.classList.add('flipped');
+        } else {
+            zundaImage.classList.remove('flipped');
+        }
+        lastDirection = currentDirection;
+    }
+}
+
 // ランダムにボイスを再生
 function playRandomCheerVoice() {
     if (CHEER_VOICE_FILES.length === 0) return;
@@ -555,13 +675,20 @@ function playRandomCheerVoice() {
     voiceAudio.volume = voiceMuted ? 0 : volume / 100;
 
     // 再生
-    voiceAudio.play().catch(error => {
-        console.error('ボイスの再生に失敗しました:', error);
-    });
+    voiceAudio.play()
+        .then(() => {
+            // 再生開始時に画像を切り替え
+            switchToSpeakImage();
+        })
+        .catch(error => {
+            console.error('ボイスの再生に失敗しました:', error);
+        });
 
-    // 再生終了時にaudio要素をクリア
+    // 再生終了時にaudio要素をクリアし、画像を通常に戻す
     voiceAudio.onended = () => {
         voiceAudio = null;
+        // 再生が終了したら通常画像に戻す
+        switchToNormalImage();
     };
 }
 
@@ -602,6 +729,8 @@ function playStartVoice() {
                 .then(() => {
                     // 再生成功
                     voiceAudio = startAudio;
+                    // 再生開始時に画像を切り替え
+                    switchToSpeakImage();
                 })
                 .catch(error => {
                     // 中断された場合などのエラーは無視（AbortErrorなど）
@@ -612,10 +741,12 @@ function playStartVoice() {
                 });
         }
 
-        // 再生終了時にaudio要素をクリア
+        // 再生終了時にaudio要素をクリアし、画像を通常に戻す
         startAudio.onended = () => {
             if (voiceAudio === startAudio) {
                 voiceAudio = null;
+                // 再生が終了したら通常画像に戻す
+                switchToNormalImage();
             }
         };
     }, 50); // 50ms待機
@@ -623,8 +754,16 @@ function playStartVoice() {
 
 // エンドボイスを再生
 function playEndVoice() {
-    if (voiceMuted) return; // ミュート中は再生しない
-    if (END_VOICE_FILES.length === 0) return; // ファイルがない場合は再生しない
+    if (voiceMuted) {
+        // ミュート中は再生しないが、グレースケールにする
+        updateZundaGrayscale();
+        return;
+    }
+    if (END_VOICE_FILES.length === 0) {
+        // ファイルがない場合は再生しないが、グレースケールにする
+        updateZundaGrayscale();
+        return;
+    }
 
     // 既存のaudio要素を確実に停止して削除
     if (voiceAudio) {
@@ -658,6 +797,8 @@ function playEndVoice() {
                 .then(() => {
                     // 再生成功
                     voiceAudio = endAudio;
+                    // 再生開始時に画像を切り替え
+                    switchToSpeakImage();
                 })
                 .catch(error => {
                     // 中断された場合などのエラーは無視（AbortErrorなど）
@@ -665,13 +806,23 @@ function playEndVoice() {
                         console.warn('エンドボイスの再生に失敗しました:', error);
                     }
                     voiceAudio = null;
+                    // 再生失敗時もグレースケールにする
+                    if (!isRunning) {
+                        updateZundaGrayscale();
+                    }
                 });
         }
 
-        // 再生終了時にaudio要素をクリア
+        // 再生終了時にaudio要素をクリアし、画像を通常に戻す
         endAudio.onended = () => {
             if (voiceAudio === endAudio) {
                 voiceAudio = null;
+                // 再生が終了したら通常画像に戻す
+                switchToNormalImage();
+                // タイマーが停止中なら、エンドボイス終了後にグレースケールにする
+                if (!isRunning) {
+                    updateZundaGrayscale();
+                }
             }
         };
     }, 50); // 50ms待機
@@ -702,6 +853,8 @@ function stopVoiceTimer() {
         voiceAudio.pause();
         voiceAudio = null;
     }
+    // ボイス停止時に通常画像に戻す
+    switchToNormalImage();
 }
 
 // BGM音量を設定
@@ -805,6 +958,7 @@ function toggleVoiceMute() {
 
     localStorage.setItem(STORAGE_KEY_VOICE_MUTED, voiceMuted.toString());
     updateVoiceMuteButton();
+    updateZundaVisibility(); // ずんだもんの表示/非表示を更新
 }
 
 // ボイスミュートボタンの表示を更新
@@ -851,6 +1005,7 @@ function loadVoiceVolume() {
     voiceMuted = mutedStored === 'true';
 
     setVoiceVolume(volume, false);
+    updateZundaVisibility(); // 初期状態のずんだもんの表示/非表示を設定
 }
 
 // ボイス間隔を設定
@@ -934,6 +1089,9 @@ function startTimer() {
 
         // タイマーの色を更新
         updateTimerColor();
+
+        // ずんだもん画像のグレースケールを更新
+        updateZundaGrayscale();
     }
 }
 
@@ -963,6 +1121,9 @@ function pauseTimer() {
 
         // タイマーの色を更新
         updateTimerColor();
+
+        // ずんだもん画像のグレースケールを更新
+        updateZundaGrayscale();
     }
 }
 
@@ -1010,15 +1171,15 @@ function showEndTimerDialog() {
     newSaveBtn.addEventListener('click', () => {
         dialog.style.display = 'none';
         saveRecordWithoutEndVoice(); // エンドボイスは別途再生
+        resetTimer(true); // エンドボイス再生フラグをtrueに
         playEndVoice(); // エンドボイスを再生
-        resetTimer();
     });
 
     // 保存せずに終了
     newNoSaveBtn.addEventListener('click', () => {
         dialog.style.display = 'none';
+        resetTimer(true); // エンドボイス再生フラグをtrueに
         playEndVoice(); // エンドボイスを再生
-        resetTimer();
     });
 
     // キャンセル（タイマーを再開）
@@ -1032,7 +1193,7 @@ function showEndTimerDialog() {
 }
 
 // タイマーをリセット
-function resetTimer() {
+function resetTimer(skipGrayscaleUpdate = false) {
     // タイマーをリセット
     isRunning = false;
     startTime = null;
@@ -1058,6 +1219,12 @@ function resetTimer() {
 
     // タイマーの色を更新
     updateTimerColor();
+
+    // ずんだもん画像のグレースケールを更新
+    // エンドボイス再生時はスキップ（エンドボイス終了後にグレースケールにするため）
+    if (!skipGrayscaleUpdate) {
+        updateZundaGrayscale();
+    }
 }
 
 // 記録一覧を表示
@@ -3050,4 +3217,237 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSkyboxOnLoad);
 } else {
     initSkyboxOnLoad();
+}
+
+// ずんだもん画像のドラッグ機能
+function initZundaDraggable() {
+    const zundaImage = document.getElementById('zundaImage');
+    if (!zundaImage) return;
+
+    // デフォルトのドラッグ動作を無効化
+    zundaImage.addEventListener('dragstart', (e) => {
+        e.preventDefault();
+        return false;
+    });
+
+    // ローカルストレージから位置を復元
+    const savedPosition = localStorage.getItem(STORAGE_KEY_ZUNDA_POSITION);
+    if (savedPosition) {
+        try {
+            const pos = JSON.parse(savedPosition);
+            zundaImage.style.bottom = 'auto';
+            zundaImage.style.right = 'auto';
+            zundaImage.style.top = pos.top + 'px';
+            zundaImage.style.left = pos.left + 'px';
+            // 位置復元後に画像の向きを更新（初期化時はアニメーションなし）
+            setTimeout(() => {
+                updateZundaDirection(false);
+            }, 0);
+        } catch (e) {
+            console.warn('位置情報の復元に失敗しました:', e);
+        }
+    }
+
+    let isDragging = false;
+    let startX;
+    let startY;
+    let initialX;
+    let initialY;
+    let lastDirection = null; // 最後の向き（'left' または 'right'）
+
+    // 現在の位置を取得
+    function getCurrentPosition() {
+        const rect = zundaImage.getBoundingClientRect();
+        return {
+            left: rect.left,
+            top: rect.top
+        };
+    }
+
+    // 初期位置を設定（保存された位置がない場合）
+    if (!savedPosition) {
+        const rect = zundaImage.getBoundingClientRect();
+        initialX = window.innerWidth - rect.width - 20;
+        initialY = window.innerHeight - rect.height - 20;
+    } else {
+        try {
+            const pos = JSON.parse(savedPosition);
+            initialX = pos.left;
+            initialY = pos.top;
+        } catch (e) {
+            const rect = zundaImage.getBoundingClientRect();
+            initialX = window.innerWidth - rect.width - 20;
+            initialY = window.innerHeight - rect.height - 20;
+        }
+    }
+
+    // 初期方向を設定
+    const rect = zundaImage.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const screenCenter = window.innerWidth / 2;
+    lastDirection = centerX < screenCenter ? 'left' : 'right';
+
+    // マウスダウン
+    zundaImage.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return; // 左クリックのみ
+        e.preventDefault();
+        e.stopPropagation();
+
+        const pos = getCurrentPosition();
+        startX = e.clientX;
+        startY = e.clientY;
+        initialX = pos.left;
+        initialY = pos.top;
+
+        isDragging = true;
+        zundaImage.style.cursor = 'grabbing';
+    });
+
+    // マウス移動
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+
+        let newX = initialX + deltaX;
+        let newY = initialY + deltaY;
+
+        // 画面外に出ないように制限
+        const maxX = window.innerWidth - zundaImage.offsetWidth;
+        const maxY = window.innerHeight - zundaImage.offsetHeight;
+
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+
+        zundaImage.style.bottom = 'auto';
+        zundaImage.style.right = 'auto';
+        zundaImage.style.top = newY + 'px';
+        zundaImage.style.left = newX + 'px';
+
+        // 画像の向きを更新（ドラッグ中はアニメーションあり）
+        updateZundaDirection(true);
+    });
+
+    // マウスアップ
+    document.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            zundaImage.style.cursor = 'move';
+
+            // 現在の位置を更新
+            const pos = getCurrentPosition();
+            initialX = pos.left;
+            initialY = pos.top;
+
+            // 位置をローカルストレージに保存
+            savePosition();
+
+            // 画像の向きを更新（ドラッグ終了時はアニメーションなし）
+            updateZundaDirection(false);
+        }
+    });
+
+    // タッチイベント対応
+    zundaImage.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const touch = e.touches[0];
+        const pos = getCurrentPosition();
+        startX = touch.clientX;
+        startY = touch.clientY;
+        initialX = pos.left;
+        initialY = pos.top;
+
+        isDragging = true;
+    });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+
+        let newX = initialX + deltaX;
+        let newY = initialY + deltaY;
+
+        // 画面外に出ないように制限
+        const maxX = window.innerWidth - zundaImage.offsetWidth;
+        const maxY = window.innerHeight - zundaImage.offsetHeight;
+
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+
+        zundaImage.style.bottom = 'auto';
+        zundaImage.style.right = 'auto';
+        zundaImage.style.top = newY + 'px';
+        zundaImage.style.left = newX + 'px';
+
+        // 画像の向きを更新（ドラッグ中はアニメーションあり）
+        updateZundaDirection(true);
+    });
+
+    document.addEventListener('touchend', () => {
+        if (isDragging) {
+            isDragging = false;
+
+            // 現在の位置を更新
+            const pos = getCurrentPosition();
+            initialX = pos.left;
+            initialY = pos.top;
+
+            // 位置をローカルストレージに保存
+            savePosition();
+
+            // 画像の向きを更新（ドラッグ終了時はアニメーションなし）
+            updateZundaDirection(false);
+        }
+    });
+
+    // 位置を保存
+    function savePosition() {
+        const pos = getCurrentPosition();
+        const position = {
+            top: pos.top,
+            left: pos.left
+        };
+        localStorage.setItem(STORAGE_KEY_ZUNDA_POSITION, JSON.stringify(position));
+    }
+
+    // リサイズ時に位置を調整
+    window.addEventListener('resize', () => {
+        const pos = getCurrentPosition();
+        const maxX = window.innerWidth - zundaImage.offsetWidth;
+        const maxY = window.innerHeight - zundaImage.offsetHeight;
+
+        if (pos.left > maxX || pos.top > maxY) {
+            const newX = Math.min(pos.left, maxX);
+            const newY = Math.min(pos.top, maxY);
+            zundaImage.style.top = newY + 'px';
+            zundaImage.style.left = newX + 'px';
+            savePosition();
+        }
+
+        // リサイズ時に画像の向きを更新（アニメーションなし）
+        updateZundaDirection(false);
+    });
+}
+
+// ページ読み込み時にずんだもんのドラッグ機能を初期化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        initZundaDraggable();
+        updateZundaGrayscale(); // 初期状態のグレースケールを設定
+        updateZundaDirection(false); // 初期状態の向きを設定（アニメーションなし）
+        updateZundaVisibility(); // 初期状態のずんだもんの表示/非表示を設定
+    });
+} else {
+    initZundaDraggable();
+    updateZundaGrayscale(); // 初期状態のグレースケールを設定
+    updateZundaDirection(); // 初期状態の向きを設定
+    updateZundaVisibility(); // 初期状態のずんだもんの表示/非表示を設定
 }
