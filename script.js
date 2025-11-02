@@ -1067,9 +1067,9 @@ function stopVoiceTimer() {
 // BGM音量を設定
 function setBGMVolume(volume, updateMuteState = true) {
     if (bgmAudio && !bgmMuted) {
-        // 0-100の値を0.0-0.5に変換（ベースを半分にする）
-        // スライダー値100が実際の音量50%になる
-        bgmAudio.volume = (volume / 100) * 0.5;
+        // 0-100の値を0.0-0.25に変換（ベースを4分の1にする）
+        // スライダー値100が実際の音量25%になる
+        bgmAudio.volume = (volume / 100) * 0.25;
     } else if (bgmAudio && bgmMuted) {
         // ミュート中は音量を0にする
         bgmAudio.volume = 0;
@@ -1104,7 +1104,7 @@ function toggleBGMMute() {
     } else {
         // ミュート解除: 保存した音量に戻す
         if (bgmAudio) {
-            bgmAudio.volume = (bgmVolumeBeforeMute / 100) * 0.5;
+            bgmAudio.volume = (bgmVolumeBeforeMute / 100) * 0.25;
         }
     }
 
