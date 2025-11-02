@@ -222,21 +222,47 @@ header h1 {
 
 .main-layout {
     display: grid;
-    grid-template-columns: 450px 380px 1fr;
+    grid-template-columns: 380px 1fr;
     gap: 30px;
     align-items: start;
     min-height: calc(100vh - 140px);
     /* 高さを確保してスクロール前提に */
     position: relative;
     z-index: 2;
+    grid-auto-rows: min-content;
+    /* 行の高さを内容に合わせる */
+    padding-left: 480px;
+    /* 左列（450px + gap 30px）のスペースを確保 */
+}
+
+/* 右パネルをカレンダーの高さに合わせる（JavaScriptで動的に設定） */
+
+.records-timeline-container {
+    grid-column: 1 / 3;
+    /* 中央パネル（列1）から右パネル（列3）まで広げる */
+    border-top: 2px solid #3a3a4e;
+    padding-top: 10px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
 }
 
 .left-panel {
     display: flex;
     flex-direction: column;
     gap: 30px;
-    min-height: 600px;
-    /* 最低限の高さを確保 */
+    position: absolute;
+    /* .main-layoutに対して絶対配置（スクロールに追従しない） */
+    left: 0px;
+    /* グリッドの左側に配置（450px幅 + 30px gap） */
+    top: 0;
+    width: 450px;
+    height: calc(100vh - 140px);
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 10;
+    /* 左パネルを独立したスクロール領域にする */
 }
 
 .center-panel {
@@ -248,8 +274,11 @@ header h1 {
 .right-panel {
     display: flex;
     flex-direction: column;
-    min-height: 600px;
-    /* 最低限の高さを確保 */
+    overflow-y: auto;
+    /* コンテンツが多くなったらスクロール */
+    overflow-x: hidden;
+    align-self: start;
+    /* グリッドの行の上端に配置 */
 }
 
 
@@ -766,8 +795,6 @@ header h1 {
 }
 
 .records-section {
-    border-top: 2px solid #3a3a4e;
-    padding-top: 20px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -789,7 +816,7 @@ header h1 {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .statistics-section h2 {
@@ -839,11 +866,14 @@ header h1 {
     font-size: 14px;
 }
 
-.statistics-total {
+.statistics-main {
     background: #2a2a3e;
     border: 1px solid #3a3a4e;
     border-radius: 8px;
     padding: 20px;
+}
+
+.statistics-total {
     margin-bottom: 24px;
 }
 
@@ -932,21 +962,27 @@ header h1 {
 
 /* 今日の作業記録タイムテーブル */
 .timeline-section {
-    margin-top: 30px;
-    padding-top: 30px;
-    border-top: 1px solid #3a3a4e;
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    min-width: 300px;
+    /* 最小幅を確保 */
+    max-height: 500px;
 }
 
 .timeline-title {
-    font-size: 16px;
-    font-weight: 600;
     color: #e0e0e0;
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
     margin-bottom: 15px;
 }
 
 .timeline-container {
     position: relative;
     width: 100%;
+    min-width: 400px;
+    /* タイムラインの最小幅を確保 */
     height: 120px;
     max-width: 100%;
     background-color: #1a1a2e;
@@ -1101,7 +1137,7 @@ header h1 {
     color: #e0e0e0;
     font-size: 22px;
     font-weight: 600;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .btn-export,
@@ -1420,6 +1456,10 @@ header h1 {
         font-size: 20px;
     }
 
+    .timeline-title {
+        font-size: 20px;
+    }
+
     .header-top {
         flex-direction: column;
         align-items: center;
@@ -1527,7 +1567,7 @@ body:not(.timer-running) .tag-input {
     border-color: #555;
 }
 
-body:not(.timer-running) .statistics-total {
+body:not(.timer-running) .statistics-main {
     background: #3a3a3a;
     border-color: #555;
 }
@@ -1599,6 +1639,10 @@ body:not(.timer-running) .tag-management-section {
 }
 
 body:not(.timer-running) .calendar-section {
+    border-top-color: #555;
+}
+
+body:not(.timer-running) .records-timeline-container {
     border-top-color: #555;
 }
 

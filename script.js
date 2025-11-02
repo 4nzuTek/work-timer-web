@@ -35,6 +35,8 @@ const STORAGE_KEY_VOICE_VOLUME = 'workingTimer_voice_volume';
 const STORAGE_KEY_VOICE_INTERVAL = 'workingTimer_voice_interval';
 const STORAGE_KEY_BGM_MUTED = 'workingTimer_bgm_muted';
 const STORAGE_KEY_VOICE_MUTED = 'workingTimer_voice_muted';
+const STORAGE_KEY_LAST_DESCRIPTION = 'workingTimer_last_description';
+const STORAGE_KEY_LAST_SELECTED_TAGS = 'workingTimer_last_selected_tags';
 
 // ボイスファイルのリスト（動的に読み込む）
 let CHEER_VOICE_FILES = [];
@@ -433,7 +435,12 @@ function saveRecordWithoutEndVoice() {
     // 統計を更新
     updateStatistics();
 
+    // タイムテーブルを更新
+    updateTimeline();
+
     // タグと作業内容はリセットしない（次の作業でも使えるように保持）
+    // 直近のタイマー設定を保存（作業内容とタグ選択を保持）
+    saveLastTimerSettings();
 }
 
 // 記録を作成して保存（後方互換性のため残す）
@@ -1040,6 +1047,9 @@ function resetTimer() {
     // 入力欄を有効化（値は保持）
     updateDescriptionInput();
 
+    // 直近のタイマー設定を保存（作業内容とタグ選択を保持）
+    saveLastTimerSettings();
+
     // BGMを停止
     stopBGM();
 
@@ -1193,6 +1203,11 @@ function renderCalendar() {
     calendarHTML += '</div>';
     calendarContainer.innerHTML = calendarHTML;
 
+    // カレンダー更新後に右パネルの高さを調整
+    setTimeout(() => {
+        adjustRightPanelHeight();
+    }, 0);
+
     // 各日付にクリックイベントを追加
     const dayElements = calendarContainer.querySelectorAll('.calendar-day[data-date]');
     dayElements.forEach(element => {
@@ -1208,6 +1223,7 @@ function selectDate(dateStr) {
     selectedDate = dateStr;
     renderCalendar();
     displayRecords(dateStr);
+    updateTimeline(); // タイムテーブルも更新
 }
 
 // 前月に移動
@@ -1216,6 +1232,7 @@ function goToPrevMonth() {
     selectedDate = null; // 日付選択をリセット
     renderCalendar();
     displayRecords(); // 記録一覧をリセット
+    updateTimeline(); // タイムテーブルも更新（今日の記録を表示）
 }
 
 // 次月に移動
@@ -1224,6 +1241,7 @@ function goToNextMonth() {
     selectedDate = null; // 日付選択をリセット
     renderCalendar();
     displayRecords(); // 記録一覧をリセット
+    updateTimeline(); // タイムテーブルも更新（今日の記録を表示）
 }
 
 // 作業内容入力欄の状態を更新
@@ -1241,6 +1259,46 @@ function updateDescriptionInput() {
         // currentDescriptionと入力欄の値を同期
         if (currentDescription !== '' && descriptionInput.value !== currentDescription) {
             descriptionInput.value = currentDescription;
+        }
+    }
+}
+
+// 直近のタイマー設定（作業内容とタグ選択）を保存
+function saveLastTimerSettings() {
+    // 作業内容を保存（入力欄の値またはcurrentDescription）
+    let descriptionToSave = '';
+    if (descriptionInput && descriptionInput.value.trim() !== '') {
+        descriptionToSave = descriptionInput.value.trim();
+    } else if (currentDescription) {
+        descriptionToSave = currentDescription;
+    }
+    localStorage.setItem(STORAGE_KEY_LAST_DESCRIPTION, descriptionToSave);
+
+    // タグ選択を保存
+    localStorage.setItem(STORAGE_KEY_LAST_SELECTED_TAGS, JSON.stringify(selectedTags));
+}
+
+// 直近のタイマー設定（作業内容とタグ選択）を復元
+function loadLastTimerSettings() {
+    // 作業内容を復元
+    const savedDescription = localStorage.getItem(STORAGE_KEY_LAST_DESCRIPTION);
+    if (savedDescription) {
+        currentDescription = savedDescription;
+        if (descriptionInput) {
+            descriptionInput.value = savedDescription;
+        }
+    }
+
+    // タグ選択を復元
+    const savedTags = localStorage.getItem(STORAGE_KEY_LAST_SELECTED_TAGS);
+    if (savedTags) {
+        try {
+            selectedTags = JSON.parse(savedTags);
+            // タグチェックボックスを更新
+            updateTagCheckboxes();
+        } catch (e) {
+            console.error('タグ選択の復元に失敗しました:', e);
+            selectedTags = [];
         }
     }
 }
@@ -1276,6 +1334,8 @@ function toggleTag(tagName) {
     } else {
         selectedTags.push(tagName);
     }
+    // タグ選択状態を保存
+    saveLastTimerSettings();
 }
 
 // タグ一覧を表示
@@ -1998,6 +2058,22 @@ if (tagInput) {
     });
 }
 
+// 作業内容入力欄の変更イベントリスナー
+if (descriptionInput) {
+    descriptionInput.addEventListener('input', () => {
+        // 入力内容を保存（タイマー実行中でない場合のみ）
+        if (!isRunning && elapsedTime === 0) {
+            saveLastTimerSettings();
+        }
+    });
+    descriptionInput.addEventListener('change', () => {
+        // フォーカスが外れた時も保存（タイマー実行中でない場合のみ）
+        if (!isRunning && elapsedTime === 0) {
+            saveLastTimerSettings();
+        }
+    });
+}
+
 // 初期表示
 timerDisplay.textContent = formatTime(0);
 updateTimerColor();
@@ -2012,7 +2088,10 @@ renderCalendar();
 displayRecords();
 displayTags();
 updateTagCheckboxes();
+loadLastTimerSettings(); // 直近のタイマー設定を復元（updateTagCheckboxesの後）
 updateStatistics(); // 統計を表示
+updateTimeline(); // タイムテーブルを表示
+adjustRightPanelHeight(); // 右パネルの高さをカレンダーに合わせる
 
 // エクスポート/インポートボタンのイベントリスナー
 const exportBtn = document.getElementById('exportBtn');
@@ -2069,8 +2148,11 @@ function updateStatistics() {
     // 期間情報を取得
     const periodInfo = getPeriodInfo(statisticsPeriod, records, filteredRecords);
 
-    // HTMLを生成
-    let html = `<div class="statistics-total">
+    // HTMLを生成（総作業時間とタグ別作業時間を同じコンテナに入れる）
+    let html = `<div class="statistics-main">`;
+
+    // 総作業時間
+    html += `<div class="statistics-total">
         <div class="statistics-label-row">
             <div class="statistics-label">総作業時間</div>
             <div class="statistics-period-info">${periodInfo}</div>
@@ -2078,6 +2160,7 @@ function updateStatistics() {
         <div class="statistics-value">${formatDurationWithSeconds(totalSeconds)}</div>
     </div>`;
 
+    // タグ別作業時間
     if (tagStatistics.length > 0) {
         html += '<div class="statistics-tags-title">タグ別作業時間</div>';
         html += '<div class="statistics-tags">';
@@ -2106,36 +2189,45 @@ function updateStatistics() {
         html += '</div>';
     }
 
-    // 今日の作業記録タイムテーブルを追加
-    html += generateTodayTimeline();
+    html += '</div>'; // statistics-mainの閉じタグ
 
     statisticsContent.innerHTML = html;
+
+    // タイムテーブルを独立して更新
+    updateTimeline();
+}
+
+// タイムテーブルを更新（選択中の日付または今日の記録を表示）
+function updateTimeline() {
+    const timelineSection = document.getElementById('timelineSection');
+    if (!timelineSection) return;
+
+    // 選択中の日付があればそれを使い、なければ今日の日付を使う
+    const targetDate = selectedDate || formatDate(new Date());
+    const html = generateTimeline(targetDate);
+    timelineSection.innerHTML = html;
 
     // タイムテーブルのズーム機能を設定
     setupTimelineZoom();
 }
 
-// 今日の作業記録タイムテーブルを生成
-function generateTodayTimeline() {
-    const today = new Date();
-    const todayStr = formatDate(today); // YYYY-MM-DD形式
-
+// タイムテーブルを生成（指定された日付の記録を表示）
+function generateTimeline(targetDateStr) {
     const records = loadRecords();
-    const todayRecords = records.filter(record => record.date === todayStr);
+    const dateRecords = records.filter(record => record.date === targetDateStr);
 
-    if (todayRecords.length === 0) {
-        return '<div class="timeline-empty">今日の作業記録はありません</div>';
+    if (dateRecords.length === 0) {
+        return '<h2 class="timeline-title">タイムライン</h2><p class="no-records">記録がありません</p>';
     }
 
     // 作業記録を開始時刻でソート
-    todayRecords.sort((a, b) => {
+    dateRecords.sort((a, b) => {
         const aTime = parseTime(a.startTime);
         const bTime = parseTime(b.startTime);
         return aTime - bTime;
     });
 
-    let html = '<div class="timeline-section">';
-    html += '<div class="timeline-title">今日の作業記録</div>';
+    let html = '<h2 class="timeline-title">タイムライン</h2>';
     html += '<div class="timeline-container">';
     html += '<div class="timeline-container-scroll">';
     html += '<div class="timeline-background"></div>';
@@ -2152,7 +2244,7 @@ function generateTodayTimeline() {
 
     // 重なりを検出して縦に配置
     const lanes = [];
-    todayRecords.forEach(record => {
+    dateRecords.forEach(record => {
         const startTime = parseTime(record.startTime);
         const endTime = parseTime(record.endTime);
 
@@ -2226,7 +2318,6 @@ function generateTodayTimeline() {
     html += '</div>';
     html += '</div>';
     html += '</div>';
-    html += '</div>';
 
     return html;
 }
@@ -2241,8 +2332,11 @@ function setupTimelineZoom() {
     const timelineHours = timelineContainer.querySelector('.timeline-hours');
     if (!timelineScrollWrapper || !timelineContent || !timelineHours) return;
 
-    // 初期ズームレベルを適用
-    applyTimelineZoom(timelineScrollWrapper, timelineContent, timelineHours, timelineZoomLevel);
+    // 初期ズームレベルを適用（少し遅延させて、レイアウトが確定してから実行）
+    // これにより、正しい幅を取得できる
+    setTimeout(() => {
+        applyTimelineZoom(timelineScrollWrapper, timelineContent, timelineHours, timelineZoomLevel);
+    }, 10);
 
     // ドラッグでスクロールする機能
     let isDragging = false;
@@ -2851,6 +2945,22 @@ function initSkybox() {
 
     animate();
 }
+
+// 右パネルの高さをカレンダーの高さに合わせる
+function adjustRightPanelHeight() {
+    const centerPanel = document.querySelector('.center-panel');
+    const rightPanel = document.querySelector('.right-panel');
+
+    if (centerPanel && rightPanel) {
+        // カレンダーの高さを取得
+        const calendarHeight = centerPanel.offsetHeight;
+        // 右パネルの高さをカレンダーに合わせる
+        rightPanel.style.maxHeight = `${calendarHeight}px`;
+    }
+}
+
+// リサイズやカレンダー更新時に高さを再調整
+window.addEventListener('resize', adjustRightPanelHeight);
 
 // ページ読み込み時にskyboxを初期化
 function initSkyboxOnLoad() {
