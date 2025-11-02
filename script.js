@@ -464,6 +464,16 @@ function saveRecordWithoutEndVoice() {
         console.error('終了時刻の形式が正しくありません:', endTimeStr);
     }
 
+    // 作業内容を取得（終了時の入力欄の値をそのまま保存）
+    let descriptionToSave = '';
+    if (descriptionInput) {
+        descriptionToSave = descriptionInput.value.trim();
+        // 入力欄の値をcurrentDescriptionにも反映（次回のために保持）
+        if (descriptionToSave !== '') {
+            currentDescription = descriptionToSave;
+        }
+    }
+
     const record = {
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9), // 一意のID
         date: formatDate(recordStartTime),
@@ -471,7 +481,7 @@ function saveRecordWithoutEndVoice() {
         endTime: endTimeStr, // HH:MM:SS形式（秒まで含む）
         duration: durationMinutes, // 分数
         durationSeconds: durationSeconds, // 秒（追加情報として保存）
-        description: currentDescription.trim(), // 作業内容
+        description: descriptionToSave, // 作業内容（入力欄の値を優先）
         tags: [...selectedTags] // 選択されたタグをコピー
     };
 
@@ -1309,20 +1319,9 @@ function startTimer() {
     if (!isRunning) {
         isRunning = true;
 
-        // 経過時間が0の場合（新規開始）、記録開始時刻と作業内容を設定
+        // 経過時間が0の場合（新規開始）、記録開始時刻を設定
         if (elapsedTime === 0) {
             recordStartTime = new Date();
-            // 作業内容を保存（入力欄の値を優先、空の場合は既存のcurrentDescriptionを保持）
-            if (descriptionInput) {
-                const inputValue = descriptionInput.value.trim();
-                if (inputValue !== '') {
-                    currentDescription = inputValue;
-                }
-                // 入力欄が空で、currentDescriptionがある場合は入力欄に反映
-                if (inputValue === '' && currentDescription !== '') {
-                    descriptionInput.value = currentDescription;
-                }
-            }
         }
 
         // 経過時間を考慮して開始時刻を設定
@@ -1335,7 +1334,7 @@ function startTimer() {
         startBtn.disabled = true;
         pauseBtn.disabled = false;
 
-        // 入力欄を無効化
+        // 入力欄の状態を更新（常に有効）
         updateDescriptionInput();
 
         // BGMを再生
@@ -1409,7 +1408,9 @@ function endTimer() {
 // 終了確認ダイアログを表示
 function showEndTimerDialog() {
     const durationMinutes = Math.floor(elapsedTime / 60000);
-    const descriptionText = currentDescription ? `作業内容: ${currentDescription}` : '';
+    // 作業内容を取得（終了時の入力欄の値をそのまま表示）
+    const descriptionForDialog = descriptionInput ? descriptionInput.value.trim() : '';
+    const descriptionText = descriptionForDialog ? `作業内容: ${descriptionForDialog}` : '';
     const message = `作業記録を終了しますか？\n\n（${formatDuration(durationMinutes)}の作業）${descriptionText ? '\n' + descriptionText : ''}`;
 
     const dialog = document.getElementById('endTimerDialog');
@@ -1688,29 +1689,19 @@ function goToNextMonth() {
 function updateDescriptionInput() {
     if (!descriptionInput) return;
 
-    if (isRunning || elapsedTime > 0) {
-        // タイマーが実行中または一時停止中は無効化
-        descriptionInput.disabled = true;
-        descriptionInput.readOnly = true;
-    } else {
-        // タイマーが停止中は有効化
-        descriptionInput.disabled = false;
-        descriptionInput.readOnly = false;
-        // currentDescriptionと入力欄の値を同期
-        if (currentDescription !== '' && descriptionInput.value !== currentDescription) {
-            descriptionInput.value = currentDescription;
-        }
-    }
+    // 常に入力欄を有効化（値は変更しない）
+    descriptionInput.disabled = false;
+    descriptionInput.readOnly = false;
 }
 
 // 直近のタイマー設定（作業内容とタグ選択）を保存
 function saveLastTimerSettings() {
-    // 作業内容を保存（入力欄の値またはcurrentDescription）
+    // 作業内容を保存（入力欄の値をそのまま保存、空欄も含む）
     let descriptionToSave = '';
-    if (descriptionInput && descriptionInput.value.trim() !== '') {
-        descriptionToSave = descriptionInput.value.trim();
-    } else if (currentDescription) {
-        descriptionToSave = currentDescription;
+    if (descriptionInput) {
+        descriptionToSave = descriptionInput.value;
+        // currentDescriptionも更新（次回の初期表示用）
+        currentDescription = descriptionToSave.trim();
     }
     localStorage.setItem(STORAGE_KEY_LAST_DESCRIPTION, descriptionToSave);
 
@@ -1720,10 +1711,11 @@ function saveLastTimerSettings() {
 
 // 直近のタイマー設定（作業内容とタグ選択）を復元
 function loadLastTimerSettings() {
-    // 作業内容を復元
+    // 作業内容を復元（保存された値をそのまま復元、空欄も含む）
     const savedDescription = localStorage.getItem(STORAGE_KEY_LAST_DESCRIPTION);
-    if (savedDescription) {
-        currentDescription = savedDescription;
+    if (savedDescription !== null) {
+        // null でない場合は、空文字列も含めて復元
+        currentDescription = savedDescription.trim();
         if (descriptionInput) {
             descriptionInput.value = savedDescription;
         }
@@ -1731,7 +1723,7 @@ function loadLastTimerSettings() {
 
     // タグ選択を復元
     const savedTags = localStorage.getItem(STORAGE_KEY_LAST_SELECTED_TAGS);
-    if (savedTags) {
+    if (savedTags !== null) {
         try {
             selectedTags = JSON.parse(savedTags);
             // タグチェックボックスを更新
@@ -1739,7 +1731,13 @@ function loadLastTimerSettings() {
         } catch (e) {
             console.error('タグ選択の復元に失敗しました:', e);
             selectedTags = [];
+            // タグチェックボックスを更新
+            updateTagCheckboxes();
         }
+    } else {
+        // 保存されたタグがない場合は空配列で初期化
+        selectedTags = [];
+        updateTagCheckboxes();
     }
 }
 
@@ -2580,16 +2578,12 @@ if (tagInput) {
 // 作業内容入力欄の変更イベントリスナー
 if (descriptionInput) {
     descriptionInput.addEventListener('input', () => {
-        // 入力内容を保存（タイマー実行中でない場合のみ）
-        if (!isRunning && elapsedTime === 0) {
-            saveLastTimerSettings();
-        }
+        // 入力内容を常に保存
+        saveLastTimerSettings();
     });
     descriptionInput.addEventListener('change', () => {
-        // フォーカスが外れた時も保存（タイマー実行中でない場合のみ）
-        if (!isRunning && elapsedTime === 0) {
-            saveLastTimerSettings();
-        }
+        // フォーカスが外れた時も常に保存
+        saveLastTimerSettings();
     });
 }
 
