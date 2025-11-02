@@ -27,6 +27,7 @@ let timelineZoomLevel = 0.98; // ズームレベル（初期値は最小ズー�
 const TIMELINE_MIN_ZOOM = 0.98; // 最小ズーム（スクロールバーが出ないように少し余裕を持たせる）
 const TIMELINE_MAX_ZOOM = 5.0; // 最大ズーム
 const TIMELINE_ZOOM_STEP = 0.1; // ズームのステップ
+let currentTimelineDate = null; // 現在タイムラインに表示している日付（YYYY-MM-DD形式）
 
 // ローカルストレージのキー
 const STORAGE_KEY_RECORDS = 'workingTimer_records';
@@ -497,8 +498,8 @@ function saveRecordWithoutEndVoice() {
         // 統計を更新
         updateStatistics();
 
-        // タイムテーブルを更新
-        updateTimeline();
+        // タイムテーブルを更新（記録が追加されたので強制再描画）
+        updateTimeline(true);
     });
 
     // タグと作業内容はリセットしない（次の作業でも使えるように保持）
@@ -2086,6 +2087,7 @@ function deleteRecord(recordId) {
         }
         renderCalendar();
         updateStatistics(); // 統計を更新
+        updateTimeline(true); // タイムテーブルを更新（記録が削除されたので強制再描画）
     });
 }
 
@@ -2449,6 +2451,7 @@ function saveEditedRecord(recordId) {
         }
         renderCalendar();
         updateStatistics(); // 統計を更新
+        updateTimeline(true); // タイムテーブルを更新（記録が編集されたので強制再描画）
     });
 }
 
@@ -2725,22 +2728,47 @@ function updateStatistics() {
 
     statisticsContent.innerHTML = html;
 
-    // タイムテーブルを独立して更新
-    updateTimeline();
+    // タイムテーブルは統計期間の変更とは無関係なので更新しない
+    // （タイムテーブルは常に選択中の日付または今日の記録を表示するため）
 }
 
 // タイムテーブルを更新（選択中の日付または今日の記録を表示）
-function updateTimeline() {
+function updateTimeline(force = false) {
     const timelineSection = document.getElementById('timelineSection');
-    if (!timelineSection) return;
+    const timelineContent = document.getElementById('timelineContent');
+    if (!timelineSection || !timelineContent) return;
 
     // 選択中の日付があればそれを使い、なければ今日の日付を使う
     const targetDate = selectedDate || formatDate(new Date());
+
+    // 表示する日付が変わっていない場合は再描画をスキップ（forceがtrueの場合は除く）
+    if (!force && currentTimelineDate === targetDate) {
+        return;
+    }
+
+    currentTimelineDate = targetDate;
+
+    // ズーム率を最小値（完全にズームアウト）にリセット
+    timelineZoomLevel = TIMELINE_MIN_ZOOM;
+
+    // 内容部分のみを非表示にしてから更新（スクロールバーの一瞬の表示を防ぐ）
+    timelineContent.style.visibility = 'hidden';
+
     const html = generateTimeline(targetDate);
-    timelineSection.innerHTML = html;
+    timelineContent.innerHTML = html;
 
     // タイムテーブルのズーム機能を設定
-    setupTimelineZoom();
+    setupTimelineZoom(true);
+
+    // 記録がない場合（タイムラインコンテナが存在しない場合）は、手動で可視性を設定
+    // setupTimelineZoomはタイムラインコンテナがない場合に早期リターンするため
+    const timelineContainer = timelineContent.querySelector('.timeline-container');
+    if (!timelineContainer) {
+        // 記録がない場合でも、タイムラインコンテンツを表示する
+        requestAnimationFrame(() => {
+            timelineContent.style.visibility = 'visible';
+        });
+    }
 }
 
 // タイムテーブルを生成（指定された日付の記録を表示）
@@ -2749,7 +2777,7 @@ function generateTimeline(targetDateStr) {
     const dateRecords = records.filter(record => record.date === targetDateStr);
 
     if (dateRecords.length === 0) {
-        return '<h2 class="timeline-title">タイムライン</h2><p class="no-records">記録がありません</p>';
+        return '<p class="no-records">記録がありません</p>';
     }
 
     // 作業記録を開始時刻でソート
@@ -2759,8 +2787,7 @@ function generateTimeline(targetDateStr) {
         return aTime - bTime;
     });
 
-    let html = '<h2 class="timeline-title">タイムライン</h2>';
-    html += '<div class="timeline-container">';
+    let html = '<div class="timeline-container">';
     html += '<div class="timeline-container-scroll">';
     html += '<div class="timeline-background"></div>';
     html += '<div class="timeline-hours">';
@@ -2871,21 +2898,30 @@ function generateTimeline(targetDateStr) {
 }
 
 // タイムテーブルのズーム機能を設定
-function setupTimelineZoom() {
+function setupTimelineZoom(isUpdate = false) {
     const timelineContainer = document.querySelector('.timeline-container');
     if (!timelineContainer) return;
 
     const timelineScrollWrapper = timelineContainer.querySelector('.timeline-container-scroll');
-    const timelineContent = timelineContainer.querySelector('.timeline-bars');
+    const timelineBars = timelineContainer.querySelector('.timeline-bars');
     const timelineShadows = timelineContainer.querySelector('.timeline-bar-shadows');
     const timelineHours = timelineContainer.querySelector('.timeline-hours');
-    if (!timelineScrollWrapper || !timelineContent || !timelineHours) return;
+    if (!timelineScrollWrapper || !timelineBars || !timelineHours) return;
 
-    // 初期ズームレベルを適用（少し遅延させて、レイアウトが確定してから実行）
-    // これにより、正しい幅を取得できる
-    setTimeout(() => {
-        applyTimelineZoom(timelineScrollWrapper, timelineContent, timelineShadows, timelineHours, timelineZoomLevel);
-    }, 10);
+    const timelineContent = document.getElementById('timelineContent');
+
+    // 初期ズームレベルを適用
+    // requestAnimationFrameを使って、レイアウトが確定してから実行
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            applyTimelineZoom(timelineScrollWrapper, timelineBars, timelineShadows, timelineHours, timelineZoomLevel);
+
+            // 更新時（タイムラインコンテンツが非表示の状態）は、ズーム適用後に再表示
+            if (isUpdate && timelineContent) {
+                timelineContent.style.visibility = 'visible';
+            }
+        });
+    });
 
     // ドラッグでスクロールする機能
     let isDragging = false;
@@ -2971,7 +3007,7 @@ function setupTimelineZoom() {
         // ズームレベルを更新
         timelineZoomLevel = newZoomLevel;
         const shadowsElement = timelineScrollWrapper.querySelector('.timeline-bar-shadows');
-        applyTimelineZoom(timelineScrollWrapper, timelineContent, shadowsElement, timelineHours, timelineZoomLevel, containerWidth);
+        applyTimelineZoom(timelineScrollWrapper, timelineBars, shadowsElement, timelineHours, timelineZoomLevel, containerWidth);
 
         // ズーム後のコンテンツ幅
         const newContentWidth = containerWidth * timelineZoomLevel;
