@@ -19,7 +19,7 @@ let currentCalendarDate = new Date(); // カレンダーで表示している年
 let selectedDate = null; // 選択中の日付（YYYY-MM-DD形式）
 
 // 統計の状態管理
-let statisticsPeriod = 'all'; // 'all', 'month', 'week'
+let statisticsPeriod = 'all'; // 'all', 'month', 'week', 'day'
 
 // タイムテーブルのズーム状態管理
 let timelineZoomLevel = 1.0; // ズームレベル（1.0が標準）
@@ -1084,10 +1084,19 @@ function displayRecords(targetDate = null) {
         return aTime - bTime;
     });
 
-    const dateObj = new Date(targetDate);
-    const displayDate = `${dateObj.getFullYear()}年${dateObj.getMonth() + 1}月${dateObj.getDate()}日`;
+    // 今日の日付かどうかを判定
+    const today = new Date();
+    const todayStr = formatDate(today);
+    const isToday = targetDate === todayStr;
+
     if (recordsSectionTitle) {
-        recordsSectionTitle.textContent = `${displayDate}の記録`;
+        if (isToday) {
+            recordsSectionTitle.textContent = '今日の記録';
+        } else {
+            const dateObj = new Date(targetDate);
+            const displayDate = `${dateObj.getFullYear()}年${dateObj.getMonth() + 1}月${dateObj.getDate()}日`;
+            recordsSectionTitle.textContent = `${displayDate}の記録`;
+        }
     }
 
     if (filteredRecords.length === 0) {
@@ -2542,6 +2551,12 @@ function getPeriodInfo(period, allRecords, filteredRecords) {
             const day2 = saturday.getDate();
             return `${year1}年${month1}月${day1}日～${year2}年${month2}月${day2}日`;
         }
+        case 'day': {
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            return `${year}年${month}月${day}日`;
+        }
         default:
             return '';
     }
@@ -2581,6 +2596,14 @@ function filterRecordsByPeriod(records, period) {
                 const recordDate = new Date(record.date);
                 recordDate.setHours(0, 0, 0, 0);
                 return recordDate >= firstDayOfMonth && recordDate <= lastDayOfMonth;
+            });
+        }
+        case 'day': {
+            // 今日の記録をフィルタリング
+            return records.filter(record => {
+                const recordDate = new Date(record.date);
+                recordDate.setHours(0, 0, 0, 0);
+                return recordDate.getTime() === now.getTime();
             });
         }
         case 'all':

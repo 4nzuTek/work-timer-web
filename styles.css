@@ -260,9 +260,31 @@ header h1 {
     height: calc(100vh - 140px);
     max-height: calc(100vh - 140px);
     overflow-y: auto;
+    /* 必要な時だけスクロールバーを表示 */
     overflow-x: hidden;
+    /* ダークモード用スクロールバー（Firefox） */
+    scrollbar-width: thin;
+    scrollbar-color: #4a4a5e #2a2a3e;
     z-index: 10;
     /* 左パネルを独立したスクロール領域にする */
+}
+
+.left-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.left-panel::-webkit-scrollbar-track {
+    background: #2a2a3e;
+    border-radius: 4px;
+}
+
+.left-panel::-webkit-scrollbar-thumb {
+    background: #4a4a5e;
+    border-radius: 4px;
+}
+
+.left-panel::-webkit-scrollbar-thumb:hover {
+    background: #5a5a6e;
 }
 
 .center-panel {
@@ -274,9 +296,8 @@ header h1 {
 .right-panel {
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-    /* コンテンツが多くなったらスクロール */
-    overflow-x: hidden;
+    overflow: hidden;
+    /* 右パネル自体はスクロールしない */
     align-self: start;
     /* グリッドの行の上端に配置 */
 }
@@ -810,6 +831,8 @@ header h1 {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    overflow: hidden;
+    /* セクション全体のスクロールは無効化 */
 }
 
 .statistics-header {
@@ -817,6 +840,8 @@ header h1 {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 10px;
+    flex-shrink: 0;
+    /* ヘッダーは縮小しない */
 }
 
 .statistics-section h2 {
@@ -857,6 +882,11 @@ header h1 {
 .statistics-content {
     color: #e0e0e0;
     font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    /* コンテンツ全体のスクロールは無効化 */
 }
 
 .statistics-empty {
@@ -871,10 +901,17 @@ header h1 {
     border: 1px solid #3a3a4e;
     border-radius: 8px;
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    /* メインコンテナのスクロールは無効化 */
 }
 
 .statistics-total {
     margin-bottom: 24px;
+    flex-shrink: 0;
+    /* 総作業時間は縮小しない */
 }
 
 .statistics-label-row {
@@ -907,12 +944,42 @@ header h1 {
     font-weight: 600;
     color: #e0e0e0;
     margin-bottom: 12px;
+    flex-shrink: 0;
+    /* タイトルは縮小しない */
 }
 
 .statistics-tags {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    overflow-y: auto;
+    /* タグ別作業時間だけスクロール可能 */
+    overflow-x: hidden;
+    flex: 1;
+    /* 残りのスペースを使用 */
+    min-height: 0;
+    /* flexboxで縮小可能にする */
+    /* ダークモード用スクロールバー（Firefox） */
+    scrollbar-width: thin;
+    scrollbar-color: #4a4a5e #2a2a3e;
+}
+
+.statistics-tags::-webkit-scrollbar {
+    width: 8px;
+}
+
+.statistics-tags::-webkit-scrollbar-track {
+    background: #2a2a3e;
+    border-radius: 4px;
+}
+
+.statistics-tags::-webkit-scrollbar-thumb {
+    background: #4a4a5e;
+    border-radius: 4px;
+}
+
+.statistics-tags::-webkit-scrollbar-thumb:hover {
+    background: #5a5a6e;
 }
 
 .statistics-tag-item {
@@ -990,7 +1057,8 @@ header h1 {
     /* タイムラインの最小幅を確保 */
     height: 120px;
     max-width: 100%;
-    background-color: #1a1a2e;
+    background-color: #2a2a3e;
+    /* 他の要素と統一（統計パネルと同じ色） */
     border: 1px solid #3a3a4e;
     border-radius: 8px;
     padding: 10px;
@@ -1174,8 +1242,8 @@ header h1 {
     flex-direction: column;
     gap: 12px;
     flex: 1;
-    overflow-y: scroll;
-    /* 常にスクロールバーを表示してレイアウトシフトを防ぐ */
+    overflow-y: auto;
+    /* 必要な時だけスクロールバーを表示 */
     min-height: 300px;
     /* カレンダーの下に配置するため、高さを調整 */
     max-height: 400px;
@@ -1690,6 +1758,38 @@ body:not(.timer-running) .records-list::-webkit-scrollbar-thumb {
 }
 
 body:not(.timer-running) .records-list::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+body:not(.timer-running) .left-panel {
+    scrollbar-color: #555 #3a3a3a;
+}
+
+body:not(.timer-running) .left-panel::-webkit-scrollbar-track {
+    background: #3a3a3a;
+}
+
+body:not(.timer-running) .left-panel::-webkit-scrollbar-thumb {
+    background: #555;
+}
+
+body:not(.timer-running) .left-panel::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+body:not(.timer-running) .statistics-tags {
+    scrollbar-color: #555 #3a3a3a;
+}
+
+body:not(.timer-running) .statistics-tags::-webkit-scrollbar-track {
+    background: #3a3a3a;
+}
+
+body:not(.timer-running) .statistics-tags::-webkit-scrollbar-thumb {
+    background: #555;
+}
+
+body:not(.timer-running) .statistics-tags::-webkit-scrollbar-thumb:hover {
     background: #666;
 }
 
