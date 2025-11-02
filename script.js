@@ -269,12 +269,22 @@ function updateDisplay() {
 
 // タイマーの色を更新する関数
 function updateTimerColor() {
+    const skyboxCanvas = document.getElementById('skyboxCanvas');
+
     if (isRunning) {
         timerDisplay.classList.remove('timer-stopped');
         document.body.classList.add('timer-running');
+        // タイマー実行中はカラー表示
+        if (skyboxCanvas) {
+            skyboxCanvas.style.filter = 'grayscale(0%)';
+        }
     } else {
         timerDisplay.classList.add('timer-stopped');
         document.body.classList.remove('timer-running');
+        // タイマー停止中はグレースケール（彩度0）
+        if (skyboxCanvas) {
+            skyboxCanvas.style.filter = 'grayscale(100%)';
+        }
     }
 }
 
@@ -2658,6 +2668,8 @@ function initSkybox() {
 
     // カメラを中心に配置（最初に設定）
     camera.position.set(0, 0, 0);
+    // カメラを10度上に向ける
+    camera.rotation.x = 10 * Math.PI / 180;
 
     // エクイレクタングラー形式のテクスチャを読み込む
     const loader = new THREE.TextureLoader();
@@ -2771,9 +2783,9 @@ function initSkybox() {
     function animate() {
         requestAnimationFrame(animate);
 
-        // skyboxをゆっくり右に回転（Y軸周り）
-        if (sphereMesh) {
-            sphereMesh.rotation.y += 0.0005; // 回転速度（調整可能）
+        // skyboxをゆっくり右に回転（Y軸周り）- タイマー実行中のみ
+        if (sphereMesh && isRunning) {
+            sphereMesh.rotation.y += 0.0001; // 回転速度（調整可能）
         }
 
         renderer.render(scene, camera);
