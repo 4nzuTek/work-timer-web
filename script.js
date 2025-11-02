@@ -216,7 +216,14 @@ async function getFilesFromDirectoryListing(dir = 'voice/cheer_voice/') {
             if (href && href !== '../' && href !== './') {
                 const lowerHref = href.toLowerCase();
                 if (audioExtensions.some(ext => lowerHref.endsWith(ext))) {
-                    files.push(`${dir}${href}`);
+                    // hrefが既に絶対パス（/で始まる）か、dirで始まっている場合はそのまま使用
+                    let filePath;
+                    if (href.startsWith('/') || href.startsWith(dir)) {
+                        filePath = href;
+                    } else {
+                        filePath = `${dir}${href}`;
+                    }
+                    files.push(filePath);
                 }
             }
         });
@@ -1997,6 +2004,23 @@ displayTags();
 updateTagCheckboxes();
 updateStatistics(); // 統計を表示
 
+// エクスポート/インポートボタンのイベントリスナー
+const exportBtn = document.getElementById('exportBtn');
+const importBtn = document.getElementById('importBtn');
+const importFileInput = document.getElementById('importFileInput');
+
+if (exportBtn) {
+    exportBtn.addEventListener('click', exportRecords);
+}
+
+if (importBtn) {
+    importBtn.addEventListener('click', importRecords);
+}
+
+if (importFileInput) {
+    importFileInput.addEventListener('change', handleImportFile);
+}
+
 // 統計期間切り替えボタンのイベントリスナー
 document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -2450,3 +2474,324 @@ function calculateTagStatistics(records) {
     }));
 }
 
+// 全ユーザーデータをエクスポート
+function exportRecords() {
+    const records = loadRecords();
+    const tags = loadTags();
+
+    // 全ての設定データを取得
+    const settings = {
+        volume: localStorage.getItem(STORAGE_KEY_VOLUME) || '50',
+        voiceVolume: localStorage.getItem(STORAGE_KEY_VOICE_VOLUME) || '50',
+        voiceInterval: localStorage.getItem(STORAGE_KEY_VOICE_INTERVAL) || '15',
+        bgmMuted: localStorage.getItem(STORAGE_KEY_BGM_MUTED) || 'false',
+        voiceMuted: localStorage.getItem(STORAGE_KEY_VOICE_MUTED) || 'false'
+    };
+
+    const exportData = {
+        version: '1.1',
+        exportDate: new Date().toISOString(),
+        records: records,
+        tags: tags,
+        settings: settings
+    };
+
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD形式
+    const filename = `work-timer-data-${dateStr}.json`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    alert(`全データをエクスポートしました。\n記録数: ${records.length}件\nタグ数: ${tags.length}個\n設定も含まれています`);
+}
+
+// 作業記録をインポート
+function importRecords() {
+    const importFileInput = document.getElementById('importFileInput');
+    if (!importFileInput) return;
+
+    importFileInput.click();
+}
+
+// ファイルが選択されたときの処理
+function handleImportFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const importData = JSON.parse(e.target.result);
+
+            // データ形式の検証
+            if (!importData.records || !Array.isArray(importData.records)) {
+                alert('インポートファイルの形式が正しくありません。\nrecordsプロパティが見つかりません。');
+                return;
+            }
+
+            const existingRecords = loadRecords();
+            const existingTags = loadTags();
+
+            // 記録をマージ（IDで重複チェック）
+            const existingIds = new Set(existingRecords.map(r => r.id));
+            const newRecords = importData.records.filter(r => !existingIds.has(r.id));
+            const mergedRecords = [...existingRecords, ...newRecords];
+
+            // タグをマージ（重複を避ける）
+            const newTags = importData.tags || [];
+            const mergedTags = [...new Set([...existingTags, ...newTags])];
+
+            // 設定データを取得（旧バージョン対応）
+            const settings = importData.settings || {};
+            const hasSettings = Object.keys(settings).length > 0;
+
+            // 確認ダイアログ
+            let message = `インポートしますか？\n\n新規記録: ${newRecords.length}件\n既存記録: ${existingRecords.length}件\n合計: ${mergedRecords.length}件\n\n新規タグ: ${mergedTags.length - existingTags.length}個\n既存タグ: ${existingTags.length}個\n合計: ${mergedTags.length}個`;
+            if (hasSettings) {
+                message += `\n\n設定データもインポートされます`;
+            }
+
+            if (confirm(message)) {
+                // ローカルストレージに保存
+                localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(mergedRecords));
+                localStorage.setItem(STORAGE_KEY_TAGS, JSON.stringify(mergedTags));
+
+                // 設定データを復元（存在する場合）
+                if (hasSettings) {
+                    if (settings.volume !== undefined) {
+                        localStorage.setItem(STORAGE_KEY_VOLUME, settings.volume);
+                    }
+                    if (settings.voiceVolume !== undefined) {
+                        localStorage.setItem(STORAGE_KEY_VOICE_VOLUME, settings.voiceVolume);
+                    }
+                    if (settings.voiceInterval !== undefined) {
+                        localStorage.setItem(STORAGE_KEY_VOICE_INTERVAL, settings.voiceInterval);
+                    }
+                    if (settings.bgmMuted !== undefined) {
+                        localStorage.setItem(STORAGE_KEY_BGM_MUTED, settings.bgmMuted);
+                    }
+                    if (settings.voiceMuted !== undefined) {
+                        localStorage.setItem(STORAGE_KEY_VOICE_MUTED, settings.voiceMuted);
+                    }
+
+                    // 設定を再読み込みしてUIに反映
+                    loadBGMVolume();
+                    loadVoiceVolume();
+                    loadVoiceInterval();
+                }
+
+                // UIを更新
+                if (selectedDate) {
+                    displayRecords(selectedDate);
+                } else {
+                    displayRecords();
+                }
+                renderCalendar();
+                displayTags();
+                updateTagCheckboxes();
+                updateStatistics();
+
+                let successMessage = `インポートが完了しました。\n新規追加された記録: ${newRecords.length}件`;
+                if (hasSettings) {
+                    successMessage += `\n設定も復元されました`;
+                }
+                alert(successMessage);
+            }
+        } catch (error) {
+            console.error('インポートエラー:', error);
+            alert('ファイルの読み込みに失敗しました。\nJSON形式が正しくない可能性があります。\n\nエラー: ' + error.message);
+        }
+
+        // ファイル入力の値をリセット（同じファイルを再度選択できるように）
+        event.target.value = '';
+    };
+
+    reader.onerror = function () {
+        alert('ファイルの読み込みに失敗しました。');
+        event.target.value = '';
+    };
+
+    reader.readAsText(file);
+}
+
+// Skyboxの初期化
+function initSkybox() {
+    const canvas = document.getElementById('skyboxCanvas');
+    if (!canvas) return;
+
+    const container = canvas.parentElement;
+    if (!container) return;
+
+    // Three.jsのシーン、カメラ、レンダラーを作成
+    const scene = new THREE.Scene();
+
+    // コンテナのサイズを取得
+    const width = container.clientWidth || 800;
+    const height = container.clientHeight || 600;
+
+    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+        alpha: true,
+        antialias: true
+    });
+
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0x000000, 0); // 透明な背景
+
+    // テスト用の背景色は削除（正常表示確認のため）
+    // canvas.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+
+    console.log('Skybox initializing...');
+    console.log('Canvas size:', width, height);
+    console.log('Container:', container);
+
+    // カメラを中心に配置（最初に設定）
+    camera.position.set(0, 0, 0);
+
+    // エクイレクタングラー形式のテクスチャを読み込む
+    const loader = new THREE.TextureLoader();
+    const imagePath = 'image/M3_Photoreal_equirectangular-jpg_wide_open_plaza_in_847306475_455207.jpg';
+    console.log('Loading texture from:', imagePath);
+
+    let sphereMesh = null;
+
+    const texture = loader.load(
+        imagePath,
+        (loadedTexture) => {
+            console.log('Skybox texture loaded successfully');
+            console.log('Texture size:', loadedTexture.image.width, loadedTexture.image.height);
+
+            // テクスチャの設定（エクイレクタングラー形式用）
+            // エクイレクタングラー形式の向きを調整（上下が逆なのでtrueに）
+            loadedTexture.flipY = true;  // 上下を修正
+            // エクイレクタングラー形式は繰り返し不要
+            loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
+            loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
+            // テクスチャの更新が必要
+            loadedTexture.needsUpdate = true;
+
+            // テクスチャ読み込み完了後、球体を作成
+            // 球体のサイズを大きくして、確実にカメラの視野内に収まるようにする
+            const geometry = new THREE.SphereGeometry(1000, 64, 32);
+            // 球体を内側から見るように裏返す
+            geometry.scale(-1, 1, 1);
+
+            // エクイレクタングラー形式は通常のUVマッピングで正しく表示される
+            // DoubleSideで両面表示にして、内側から見えるようにする
+            const material = new THREE.MeshBasicMaterial({
+                map: loadedTexture,
+                side: THREE.DoubleSide,  // BackSideからDoubleSideに変更
+                fog: false,
+                transparent: false
+            });
+
+            sphereMesh = new THREE.Mesh(geometry, material);
+            scene.add(sphereMesh);
+
+            console.log('Sphere mesh created');
+            console.log('Material map:', material.map);
+            console.log('Texture:', loadedTexture);
+            console.log('Texture image:', loadedTexture.image);
+
+            // マテリアルの設定を確認
+            console.log('Material side:', material.side);
+            console.log('Material map exists:', !!material.map);
+
+            // テスト：テクスチャが正しく適用されているか確認
+            // テクスチャなしの単色マテリアルと比較
+            // const debugGeometry = new THREE.SphereGeometry(1000, 64, 32);
+            // debugGeometry.scale(-1, 1, 1);
+            // const debugMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.BackSide });
+            // const debugSphere = new THREE.Mesh(debugGeometry, debugMaterial);
+            // debugSphere.position.x = 10; // 少しずらして確認
+            // scene.add(debugSphere);
+
+            // カメラを中心に配置（すでに設定済み）
+            // カメラの向きを確認（デフォルトで(0,0,-1)方向を見ている）
+            // lookAtは必要ない（カメラは既に正しい方向を向いている）
+
+            console.log('Skybox sphere created and added to scene');
+            console.log('Scene children count:', scene.children.length);
+            console.log('Camera position:', camera.position);
+            console.log('Camera rotation:', camera.rotation);
+            console.log('Sphere radius: 1000');
+
+            // レンダリングを即座に実行
+            renderer.render(scene, camera);
+
+            // デバッグ：canvasが実際に描画されているか確認
+            console.log('Canvas rendered');
+            console.log('Canvas width/height:', canvas.width, canvas.height);
+            const renderSize = new THREE.Vector2();
+            renderer.getSize(renderSize);
+            console.log('Renderer size:', renderSize.x, renderSize.y);
+        },
+        (progress) => {
+            if (progress && progress.total) {
+                const percent = (progress.loaded / progress.total) * 100;
+                console.log('Skybox texture loading progress:', percent.toFixed(0) + '%');
+            }
+        },
+        (error) => {
+            console.error('Skybox texture loading failed:', error);
+            console.error('Failed to load image:', imagePath);
+        }
+    );
+
+    // リサイズ処理
+    function handleResize() {
+        const container = canvas.parentElement;
+        if (!container) return;
+
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    // 初回リサイズ
+    handleResize();
+
+    // アニメーションループ
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // skyboxをゆっくり右に回転（Y軸周り）
+        if (sphereMesh) {
+            sphereMesh.rotation.y += 0.0005; // 回転速度（調整可能）
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
+}
+
+// ページ読み込み時にskyboxを初期化
+function initSkyboxOnLoad() {
+    // 少し遅延させて、コンテナのサイズが確定してから初期化
+    setTimeout(() => {
+        initSkybox();
+    }, 100);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSkyboxOnLoad);
+} else {
+    initSkyboxOnLoad();
+}

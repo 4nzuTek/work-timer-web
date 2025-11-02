@@ -24,7 +24,8 @@ body.timer-running {
 }
 
 .container {
-    background: #1e1e1e;
+    position: relative;
+    background: transparent;
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     width: 100%;
@@ -32,19 +33,62 @@ body.timer-running {
     margin: 0 auto;
     padding: 40px;
     border: 1px solid #2a2a3e;
-    transition: background 0.5s ease;
+    overflow: hidden;
 }
 
 body.timer-running .container {
-    background: #1e1e2e;
+    background: transparent;
+}
+
+.skybox-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: 20px;
+    display: block;
+}
+
+.container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* 一時的にオーバーレイを薄くしてskyboxが見えるようにする */
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.15) 0%, rgba(30, 30, 30, 0.15) 100%);
+    z-index: 1;
+    pointer-events: none;
+    border-radius: 20px;
+}
+
+body.timer-running .container::before {
+    background: linear-gradient(135deg, rgba(30, 30, 46, 0.15) 0%, rgba(30, 30, 46, 0.15) 100%);
 }
 
 header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 30px;
     position: relative;
+    z-index: 2;
+}
+
+.header-top {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.data-actions {
+    display: flex;
+    gap: 10px;
+    position: absolute;
+    left: 0;
 }
 
 header h1 {
@@ -177,6 +221,8 @@ header h1 {
     align-items: start;
     min-height: calc(100vh - 140px);
     /* 高さを確保してスクロール前提に */
+    position: relative;
+    z-index: 2;
 }
 
 .left-panel {
@@ -1039,6 +1085,30 @@ header h1 {
     margin-bottom: 20px;
 }
 
+.btn-export,
+.btn-import {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 8px;
+    border: 1px solid #4a4a5e;
+    background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-export:hover,
+.btn-import:hover {
+    background: linear-gradient(135deg, #3a3a4e 0%, #2a2a3e 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn-export:active,
+.btn-import:active {
+    transform: translateY(0);
+}
+
 .records-list {
     display: flex;
     flex-direction: column;
@@ -1255,8 +1325,19 @@ header h1 {
         gap: 15px;
     }
 
+    .header-top {
+        flex-direction: column;
+        gap: 10px;
+    }
+
     header h1 {
         text-align: center;
+        width: 100%;
+    }
+
+    .data-actions {
+        width: 100%;
+        justify-content: center;
     }
 
     .main-layout {
@@ -1297,6 +1378,24 @@ header h1 {
 
     .records-section h2 {
         font-size: 20px;
+    }
+
+    .header-top {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+    }
+
+    .data-actions {
+        position: static;
+        width: 100%;
+        justify-content: center;
+    }
+
+    header h1 {
+        width: 100%;
+        text-align: center;
     }
 
     .records-list {
