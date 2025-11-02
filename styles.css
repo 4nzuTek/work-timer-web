@@ -584,33 +584,37 @@ header h1 {
 }
 
 .btn-delete-tag {
-    padding: 4px 12px;
+    padding: 6px 12px;
     font-size: 12px;
     background: #f5576c;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    font-weight: 500;
 }
 
 .btn-delete-tag:hover {
     background: #e5475c;
+    transform: translateY(-1px);
 }
 
 .btn-edit-tag {
-    padding: 4px 12px;
+    padding: 6px 12px;
     font-size: 12px;
-    background: #4a90e2;
+    background: #7c8aff;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    font-weight: 500;
 }
 
 .btn-edit-tag:hover {
-    background: #3a80d2;
+    background: #6c78ef;
+    transform: translateY(-1px);
 }
 
 .tag-edit-input {
