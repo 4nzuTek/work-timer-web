@@ -250,7 +250,7 @@ header h1 {
 .left-panel {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 25px;
     position: absolute;
     /* .main-layoutに対して絶対配置（スクロールに追従しない） */
     left: 0px;
@@ -387,7 +387,7 @@ header h1 {
 
 .description-input-section {
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 0px;
 }
 
 .description-input-label {
@@ -425,7 +425,7 @@ header h1 {
 
 .tag-selection-section {
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 0px;
 }
 
 .tag-selection-label {
